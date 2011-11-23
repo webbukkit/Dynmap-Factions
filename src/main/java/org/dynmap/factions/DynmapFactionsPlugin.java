@@ -133,7 +133,6 @@ public class DynmapFactionsPlugin extends JavaPlugin {
         String flgs = "open: " + fact.getOpen();
         flgs += "<br/>peactful: " + fact.isPeaceful();
         flgs += "<br/>peacefulExplosionsEnabled: " + fact.getPeacefulExplosionsEnabled();
-        flgs += "<br/>warzone: " + fact.isWarZone();
         v = v.replaceAll("%flags%", flgs);
         return v;
     }
@@ -152,11 +151,9 @@ public class DynmapFactionsPlugin extends JavaPlugin {
     }
     
     private void addStyle(String resid, AreaMarker m) {
-        info("addStyle(" + resid + ")");
         AreaStyle as = cusstyle.get(resid);
         if(as == null) {
             as = defstyle;
-            info("addStyle - default");
         }
         int sc = 0xFF0000;
         int fc = 0xFF0000;
@@ -378,7 +375,6 @@ public class DynmapFactionsPlugin extends JavaPlugin {
             for(Map.Entry<String,String> be : me.getValue().entrySet()) {
                 String coord = be.getKey();
                 String fact = be.getValue();
-                info("world=" + world + ", fact=" + fact + ", coord=" + coord);
                 
                 FactionBlocks factblocks = blocks_by_faction.get(fact); /* Look up faction */
                 if(factblocks == null) {    /* Create faction block if first time */
@@ -408,7 +404,6 @@ public class DynmapFactionsPlugin extends JavaPlugin {
         Collection<Faction> facts = factapi.get();
         for(Faction fact : facts) {
             String factname = ChatColor.stripColor(fact.getTag());
-            info("id=" + fact.getId() + ", factname=" + factname);
             
             FactionBlocks factblocks = blocks_by_faction.get(fact.getId());
             if(factblocks == null) continue;
@@ -529,7 +524,6 @@ public class DynmapFactionsPlugin extends JavaPlugin {
             Set<String> ids = sect.getKeys(false);
             
             for(String id : ids) {
-                info("id=" + id + " style added");
                 cusstyle.put(id, new AreaStyle(cfg, "custstyle." + id, defstyle));
             }
         }

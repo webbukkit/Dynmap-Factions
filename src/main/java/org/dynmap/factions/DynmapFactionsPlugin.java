@@ -420,13 +420,14 @@ public class DynmapFactionsPlugin extends JavaPlugin {
                 MarkerIcon ico = getMarkerIcon(factname, fact);
                 if(ico != null) {
                     Marker home = resmark.remove(markid);
+                    String lbl = factname + " [home]";
                     if(home == null) {
-                        home = set.createMarker(markid, factname, homeloc.getWorld().getName(), 
+                        home = set.createMarker(markid, lbl, homeloc.getWorld().getName(), 
                             homeloc.getX(), homeloc.getY(), homeloc.getZ(), ico, false);
                     }
                     else {
                         home.setLocation(homeloc.getWorld().getName(), homeloc.getX(), homeloc.getY(), homeloc.getZ());
-                        home.setLabel(factname);   /* Update label */
+                        home.setLabel(lbl);   /* Update label */
                         home.setMarkerIcon(ico);
                     }
                     home.setDescription(formatInfoWindow(fact)); /* Set popup */

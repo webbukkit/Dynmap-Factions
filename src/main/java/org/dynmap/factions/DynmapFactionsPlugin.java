@@ -520,11 +520,18 @@ public class DynmapFactionsPlugin extends JavaPlugin {
         this.saveConfig();  /* Save updates, if needed */
         
         /* Now, add marker set for mobs (make it transient) */
-        set = markerapi.createMarkerSet("factions.markerset", cfg.getString("layer.name", "Factions"), null, false);
+        set = markerapi.getMarkerSet("factions.markerset");
+        if(set == null)
+            set = markerapi.createMarkerSet("factions.markerset", cfg.getString("layer.name", "Factions"), null, false);
+        else
+            set.setMarkerSetLabel(cfg.getString("layer.name", "Factions"));
         if(set == null) {
             severe("Error creating marker set");
             return;
         }
+        int minzoom = cfg.getInt("layer.minzoom", 0);
+        if(minzoom > 0)
+            set.setMinZoom(minzoom);
         set.setLayerPriority(cfg.getInt("layer.layerprio", 10));
         set.setHideByDefault(cfg.getBoolean("layer.hidebydefault", false));
         use3d = cfg.getBoolean("use3dregions", false);

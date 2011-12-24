@@ -138,19 +138,19 @@ public class DynmapFactionsPlugin extends JavaPlugin {
         return v;
     }
     
-    private boolean isVisible(String id) {
+    private boolean isVisible(String id, String worldname) {
         if((visible != null) && (visible.size() > 0)) {
-            if(visible.contains(id) == false) {
+            if((visible.contains(id) == false) && (visible.contains("world:" + worldname) == false)) {
                 return false;
             }
         }
         if((hidden != null) && (hidden.size() > 0)) {
-            if(hidden.contains(id))
+            if(hidden.contains(id) || hidden.contains("world:" + worldname))
                 return false;
         }
         return true;
     }
-    
+        
     private void addStyle(String resid, AreaMarker m) {
         AreaStyle as = cusstyle.get(resid);
         if(as == null) {
@@ -224,7 +224,7 @@ public class DynmapFactionsPlugin extends JavaPlugin {
         String desc = formatInfoWindow(fact);
         
         /* Handle areas */
-        if(isVisible(factname)) {
+        if(isVisible(factname, world)) {
         	if(blocks.isEmpty())
         	    return;
             LinkedList<FactionBlock> nodevals = new LinkedList<FactionBlock>();

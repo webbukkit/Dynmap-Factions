@@ -132,7 +132,7 @@ public class DynmapFactionsPlugin extends JavaPlugin {
         v = v.replaceAll("%nation%", ChatColor.stripColor(fact.getTag()));
         /* Build flags */
         String flgs = "open: " + fact.getOpen();
-        flgs += "<br/>peactful: " + fact.isPeaceful();
+        flgs += "<br/>peaceful: " + fact.isPeaceful();
         flgs += "<br/>peacefulExplosionsEnabled: " + fact.getPeacefulExplosionsEnabled();
         v = v.replaceAll("%flags%", flgs);
         return v;

@@ -124,7 +124,7 @@ public class DynmapFactionsPlugin extends JavaPlugin {
         v = v.replaceAll("%playerowners%", (adm!=null)?adm.getName():"");
         String res = "";
         for(FPlayer r : fact.getFPlayers()) {
-        	if(res.length()>0) res += ",";
+        	if(res.length()>0) res += ", ";
         	res += r.getName();
         }
         v = v.replaceAll("%playermembers%", res);

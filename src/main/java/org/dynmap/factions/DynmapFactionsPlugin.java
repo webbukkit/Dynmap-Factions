@@ -33,6 +33,7 @@ import com.massivecraft.factions.FPlayer;
 import com.massivecraft.factions.Factions;
 import com.massivecraft.factions.Board;
 import com.massivecraft.factions.Faction;
+import com.massivecraft.factions.struct.TerritoryAccess;
 
 public class DynmapFactionsPlugin extends JavaPlugin {
     private static final Logger log = Logger.getLogger("Minecraft");
@@ -379,15 +380,21 @@ public class DynmapFactionsPlugin extends JavaPlugin {
         
         /* Get board in save format - not good, but best option for traversing the data
          * Map by world, with Map by coordinate pair ("x,z") with value of faction ID */
-        Map<String, Map<String, String>> mapdata = Board.dumpAsSaveFormat();
+        Map<String, Map<String, TerritoryAccess>> mapdata = Board.dumpAsSaveFormat();
         /* Parse into faction centric mapping, split by world */
         Map<String, FactionBlocks> blocks_by_faction = new HashMap<String, FactionBlocks>();
-        for(Map.Entry<String, Map<String,String>> me : mapdata.entrySet()) {
+        for(Map.Entry<String, Map<String,TerritoryAccess>> me : mapdata.entrySet()) {
             String world = me.getKey();
-            for(Map.Entry<String,String> be : me.getValue().entrySet()) {
+            for(Map.Entry<String,TerritoryAccess> be : me.getValue().entrySet()) {
                 String coord = be.getKey();
-                String fact = be.getValue();
-                
+                Object ta = be.getValue();
+                String fact;
+                if(ta instanceof String) {
+                    fact = (String)ta;
+                }
+                else {
+                    fact = ((TerritoryAccess)ta).getHostFactionID();
+                }
                 FactionBlocks factblocks = blocks_by_faction.get(fact); /* Look up faction */
                 if(factblocks == null) {    /* Create faction block if first time */
                     factblocks = new FactionBlocks();

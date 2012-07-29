@@ -16,6 +16,9 @@ layer:
 # Format for popup - substitute values for macros
 infowindow: '<div class="infowindow"><span style="font-size:120%;">%regionname%</span><br />Flags<br /><span style="font-weight:bold;">%flags%</span></div>'
 
+# Allow players in faction to see one another on dynmap (only relevant if dynmap has 'player-info-protected' enabled)
+visibility-by-faction: true
+
 regionstyle:
   strokeColor: "#FF0000"
   strokeOpacity: 0.8

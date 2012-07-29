@@ -17,6 +17,7 @@ import org.bukkit.Location;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.server.PluginEnableEvent;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -28,11 +29,21 @@ import org.dynmap.markers.Marker;
 import org.dynmap.markers.MarkerAPI;
 import org.dynmap.markers.MarkerIcon;
 import org.dynmap.markers.MarkerSet;
+import org.dynmap.markers.PlayerSet;
 
 import com.massivecraft.factions.FPlayer;
 import com.massivecraft.factions.Factions;
 import com.massivecraft.factions.Board;
 import com.massivecraft.factions.Faction;
+import com.massivecraft.factions.event.FPlayerJoinEvent;
+import com.massivecraft.factions.event.FPlayerLeaveEvent;
+import com.massivecraft.factions.event.FactionCreateEvent;
+import com.massivecraft.factions.event.FactionDisbandEvent;
+import com.massivecraft.factions.event.FactionRenameEvent;
+import com.massivecraft.factions.event.LandClaimEvent;
+import com.massivecraft.factions.event.LandUnclaimAllEvent;
+import com.massivecraft.factions.event.LandUnclaimEvent;
+import com.massivecraft.factions.struct.FFlag;
 import com.massivecraft.factions.struct.TerritoryAccess;
 
 public class DynmapFactionsPlugin extends JavaPlugin {
@@ -44,6 +55,7 @@ public class DynmapFactionsPlugin extends JavaPlugin {
     MarkerAPI markerapi;
     Plugin factions;
     Factions factapi;
+    boolean playersets;
     
     int blocksize;
     
@@ -108,9 +120,62 @@ public class DynmapFactionsPlugin extends JavaPlugin {
     }
 
     private class FactionsUpdate implements Runnable {
+        public boolean runonce;
+        public void run() {
+            if(!stop) {
+                updateFactions();
+                if(!runonce) {
+                    getServer().getScheduler().scheduleSyncDelayedTask(DynmapFactionsPlugin.this, this, updperiod);
+                }
+                else if(pending == this) {
+                    pending = null;
+                }
+            }
+        }
+    }
+
+    private class PlayerSetUpdate implements Runnable {
+        public String faction;
+        public PlayerSetUpdate(String fid) {
+            faction = fid;
+        }
         public void run() {
             if(!stop)
-                updateFactions();
+                updatePlayerSet(faction);
+        }
+    }
+    
+    private void requestUpdatePlayerSet(String factid) {
+        if(playersets)
+            getServer().getScheduler().scheduleSyncDelayedTask(this, new PlayerSetUpdate(factid));
+    }
+
+    private FactionsUpdate pending = null;
+    
+    private void requestUpdateFactions() {
+        if(pending == null) {
+            FactionsUpdate upd = new FactionsUpdate();
+            upd.runonce = true;
+            getServer().getScheduler().scheduleSyncDelayedTask(this, upd, 20);
+        }
+    }
+
+    private void updatePlayerSet(String factid) {
+        Set<String> plids = new HashSet<String>();
+        Faction f = factapi.get(factid);    /* Get faction */
+        if(f != null) {
+            Set<FPlayer> ps = f.getFPlayers();
+            for(FPlayer fp : ps) {
+                plids.add(fp.getId());
+            }
+        }
+        String setid = "factions." + factid;
+        PlayerSet set = markerapi.getPlayerSet(setid);  /* See if set exists */
+        if(set == null) {
+            set = markerapi.createPlayerSet(setid, true, plids, false);
+        }
+        else {
+            set.setPlayers(plids);
         }
     }
     
@@ -120,7 +185,7 @@ public class DynmapFactionsPlugin extends JavaPlugin {
     private String formatInfoWindow(Faction fact) {
         String v = "<div class=\"regioninfo\">"+infowindow+"</div>";
         v = v.replaceAll("%regionname%", ChatColor.stripColor(fact.getTag()));
-        FPlayer adm = fact.getFPlayerAdmin();
+        FPlayer adm = fact.getFPlayerLeader();
         v = v.replaceAll("%playerowners%", (adm!=null)?adm.getName():"");
         String res = "";
         for(FPlayer r : fact.getFPlayers()) {
@@ -132,8 +197,10 @@ public class DynmapFactionsPlugin extends JavaPlugin {
         v = v.replaceAll("%nation%", ChatColor.stripColor(fact.getTag()));
         /* Build flags */
         String flgs = "open: " + fact.getOpen();
-        flgs += "<br/>peaceful: " + fact.isPeaceful();
-        flgs += "<br/>peacefulExplosionsEnabled: " + fact.getPeacefulExplosionsEnabled();
+        for(FFlag ff : FFlag.values()) {
+            flgs += "<br/>" + ff.getNicename() + ": " + fact.getFlag(ff);
+            v = v.replaceAll("%flag." + ff.name() + "%", fact.getFlag(ff)?"true":"false");
+        }
         v = v.replaceAll("%flags%", flgs);
         return v;
     }
@@ -467,13 +534,18 @@ public class DynmapFactionsPlugin extends JavaPlugin {
         /* And replace with new map */
         resareas = newmap;
         resmark = newmark;
-        
-        getServer().getScheduler().scheduleSyncDelayedTask(this, new FactionsUpdate(), updperiod);
-        
+                
+    }
+    
+    private void updatePlayerSets() {
+        if(playersets) {
+            for(Faction f : factapi.get()) {
+                updatePlayerSet(f.getId());
+            }
+        }
     }
     
     private class OurServerListener implements Listener {
-        @SuppressWarnings("unused")
         @EventHandler
         public void onPluginEnable(PluginEnableEvent event) {
             Plugin p = event.getPlugin();
@@ -482,6 +554,58 @@ public class DynmapFactionsPlugin extends JavaPlugin {
                 if(dynmap.isEnabled() && factions.isEnabled())
                     activate();
             }
+        }
+        @EventHandler(priority=EventPriority.MONITOR)
+        public void onFPlayerJoin(FPlayerJoinEvent event) {
+            if(event.isCancelled())
+                return;
+            if(playersets)
+                requestUpdatePlayerSet(event.getFaction().getId());
+        }
+        @EventHandler(priority=EventPriority.MONITOR)
+        public void onFPlayerLeave(FPlayerLeaveEvent event) {
+            if(event.isCancelled())
+                return;
+            if(playersets)
+                requestUpdatePlayerSet(event.getFaction().getId());
+        }
+        @EventHandler(priority=EventPriority.MONITOR)
+        public void onFactionCreate(FactionCreateEvent event) {
+            if(event.isCancelled())
+                return;
+            if(playersets)
+                requestUpdatePlayerSet(event.getFactionId());
+            requestUpdateFactions();
+        }
+        @EventHandler(priority=EventPriority.MONITOR)
+        public void onFactionDisband(FactionDisbandEvent event) {
+            if(event.isCancelled())
+                return;
+            if(playersets)
+                requestUpdatePlayerSet(event.getFaction().getId());
+            requestUpdateFactions();
+        }
+        @EventHandler(priority=EventPriority.MONITOR)
+        public void onFactionRename(FactionRenameEvent event) {
+            if(event.isCancelled())
+                return;
+            requestUpdateFactions();
+        }
+        @EventHandler(priority=EventPriority.MONITOR)
+        public void onLandClaim(LandClaimEvent event) {
+            if(event.isCancelled())
+                return;
+            requestUpdateFactions();
+        }
+        @EventHandler(priority=EventPriority.MONITOR)
+        public void onLandUnclaim(LandUnclaimEvent event) {
+            if(event.isCancelled())
+                return;
+            requestUpdateFactions();
+        }
+        @EventHandler(priority=EventPriority.MONITOR)
+        public void onLandUnclaimAll(LandUnclaimAllEvent event) {
+            requestUpdateFactions();
         }
     }
     
@@ -510,6 +634,8 @@ public class DynmapFactionsPlugin extends JavaPlugin {
             activate();
     }
     
+    private boolean reload = false;
+    
     private void activate() {
         markerapi = api.getMarkerAPI();
         if(markerapi == null) {
@@ -522,6 +648,12 @@ public class DynmapFactionsPlugin extends JavaPlugin {
         blocksize = 16; /* Fixed at 16 */
         
         /* Load configuration */
+        if(reload) {
+            this.reloadConfig();
+        }
+        else {
+            reload = true;
+        }
         FileConfiguration cfg = getConfig();
         cfg.options().copyDefaults(true);   /* Load defaults, if needed */
         this.saveConfig();  /* Save updates, if needed */
@@ -563,6 +695,17 @@ public class DynmapFactionsPlugin extends JavaPlugin {
         if(hid != null) {
             hidden = new HashSet<String>(hid);
         }
+        /* Chec if player sets enabled */
+        playersets = cfg.getBoolean("visibility-by-faction", false);
+        if(playersets) {
+            try {
+                markerapi.getPlayerSets();  /* Test if API available on dynmap */
+            } catch (Exception x) {
+                playersets = false;
+                log.info("Dynmap does not support function needed for 'visibilitybyfaction' - need to upgrade");
+            }
+        }
+        updatePlayerSets();
 
         /* Set up update job - based on periond */
         int per = cfg.getInt("update.period", 300);

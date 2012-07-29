@@ -712,9 +712,9 @@ public class DynmapFactionsPlugin extends JavaPlugin {
                     playersets = false;
                     info("Dynmap does not have player-info-protected enabled - visibility-by-faction will have no effect");
                 }
-            } catch (Exception x) {
+            } catch (NoSuchMethodError x) {
                 playersets = false;
-                info("Dynmap does not support function needed for 'visibilitybyfaction' - need to upgrade");
+                info("Dynmap does not support function needed for 'visibility-by-faction' - need to upgrade to 0.60 or later");
             }
         }
         updatePlayerSets();

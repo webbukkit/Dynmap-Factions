@@ -161,6 +161,10 @@ public class DynmapFactionsPlugin extends JavaPlugin {
     }
 
     private void updatePlayerSet(String factid) {
+        /* If Wilderness or other unassociated factions, skip */
+        if(factid.equals("0") || factid.startsWith("-")) {
+            return;
+        }
         Set<String> plids = new HashSet<String>();
         Faction f = factapi.get(factid);    /* Get faction */
         if(f != null) {
@@ -168,14 +172,19 @@ public class DynmapFactionsPlugin extends JavaPlugin {
             for(FPlayer fp : ps) {
                 plids.add(fp.getId());
             }
+            factid = f.getTag();
         }
         String setid = "factions." + factid;
         PlayerSet set = markerapi.getPlayerSet(setid);  /* See if set exists */
-        if(set == null) {
+        if((set == null) && (f != null)) {
             set = markerapi.createPlayerSet(setid, true, plids, false);
+            info("Added player visibility set '" + setid + "' for faction " + factid);
+        }
+        else if(f != null) {
+            set.setPlayers(plids);
         }
         else {
-            set.setPlayers(plids);
+            set.deleteSet();
         }
     }
     

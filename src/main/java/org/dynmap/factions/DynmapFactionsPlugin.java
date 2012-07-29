@@ -699,10 +699,13 @@ public class DynmapFactionsPlugin extends JavaPlugin {
         playersets = cfg.getBoolean("visibility-by-faction", false);
         if(playersets) {
             try {
-                markerapi.getPlayerSets();  /* Test if API available on dynmap */
+                if(!api.testIfPlayerInfoProtected()) {
+                    playersets = false;
+                    info("Dynmap does not have player-info-protected enabled - visibility-by-faction will have no effect");
+                }
             } catch (Exception x) {
                 playersets = false;
-                log.info("Dynmap does not support function needed for 'visibilitybyfaction' - need to upgrade");
+                info("Dynmap does not support function needed for 'visibilitybyfaction' - need to upgrade");
             }
         }
         updatePlayerSets();

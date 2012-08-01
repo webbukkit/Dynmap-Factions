@@ -193,24 +193,36 @@ public class DynmapFactionsPlugin extends JavaPlugin {
     
     private String formatInfoWindow(Faction fact) {
         String v = "<div class=\"regioninfo\">"+infowindow+"</div>";
-        v = v.replaceAll("%regionname%", ChatColor.stripColor(fact.getTag()));
-        FPlayer adm = fact.getFPlayerLeader();
-        v = v.replaceAll("%playerowners%", (adm!=null)?adm.getName():"");
+        v = v.replace("%regionname%", ChatColor.stripColor(fact.getTag()));
+        FPlayer adm;
+        try {
+            adm = fact.getFPlayerAdmin();
+        } catch (NoSuchMethodError nsme) {
+            adm = fact.getFPlayerLeader();
+        }
+        v = v.replace("%playerowners%", (adm!=null)?adm.getName():"");
         String res = "";
         for(FPlayer r : fact.getFPlayers()) {
         	if(res.length()>0) res += ", ";
         	res += r.getName();
         }
-        v = v.replaceAll("%playermembers%", res);
+        v = v.replace("%playermembers%", res);
         
-        v = v.replaceAll("%nation%", ChatColor.stripColor(fact.getTag()));
+        v = v.replace("%nation%", ChatColor.stripColor(fact.getTag()));
         /* Build flags */
         String flgs = "open: " + fact.getOpen();
-        for(FFlag ff : FFlag.values()) {
-            flgs += "<br/>" + ff.getNicename() + ": " + fact.getFlag(ff);
-            v = v.replaceAll("%flag." + ff.name() + "%", fact.getFlag(ff)?"true":"false");
+        try {
+            for(FFlag ff : FFlag.values()) {
+                flgs += "<br/>" + ff.getNicename() + ": " + fact.getFlag(ff);
+                v = v.replace("%flag." + ff.name() + "%", fact.getFlag(ff)?"true":"false");
+            }
+        } catch (NoClassDefFoundError ncdfe) {
+            flgs += "<br/>peaceful: " + fact.isPeaceful();
+            v = v.replace("%flag.PEACEFUL%", fact.isPeaceful()?"true":"false");
+            flgs += "<br/>peacefulExplosionsEnabled: " + fact.getPeacefulExplosionsEnabled();            
+            v = v.replace("%flag.EXPLOSIONS%", fact.getPeacefulExplosionsEnabled()?"true":"false");
         }
-        v = v.replaceAll("%flags%", flgs);
+        v = v.replace("%flags%", flgs);
         return v;
     }
     

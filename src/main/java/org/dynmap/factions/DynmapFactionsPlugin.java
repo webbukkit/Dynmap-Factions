@@ -1,5 +1,6 @@
 package org.dynmap.factions;
 
+import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -654,6 +655,12 @@ public class DynmapFactionsPlugin extends JavaPlugin {
         /* If both enabled, activate */
         if(dynmap.isEnabled() && factions.isEnabled())
             activate();
+        
+        try {
+            MetricsLite ml = new MetricsLite(this);
+            ml.start();
+        } catch (IOException iox) {
+        }
     }
     
     private boolean reload = false;
@@ -672,6 +679,10 @@ public class DynmapFactionsPlugin extends JavaPlugin {
         /* Load configuration */
         if(reload) {
             this.reloadConfig();
+            if(set != null) {
+                set.deleteMarkerSet();
+                set = null;
+            }
         }
         else {
             reload = true;

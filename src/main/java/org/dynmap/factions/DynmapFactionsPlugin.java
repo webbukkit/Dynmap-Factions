@@ -701,6 +701,10 @@ public class DynmapFactionsPlugin extends JavaPlugin {
             severe("Error creating marker set");
             return;
         }
+        /* Make sure these are empty (on reload) */
+        resareas.clear();
+        resmark.clear();
+
         int minzoom = cfg.getInt("layer.minzoom", 0);
         if(minzoom > 0)
             set.setMinZoom(minzoom);

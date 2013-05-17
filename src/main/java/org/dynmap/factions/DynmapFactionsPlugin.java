@@ -83,6 +83,7 @@ public class DynmapFactionsPlugin extends JavaPlugin {
         double fillopacity;
         String homemarker;
         MarkerIcon homeicon;
+        boolean boost;
 
         AreaStyle(FileConfiguration cfg, String path, AreaStyle def) {
             strokecolor = cfg.getString(path+".strokeColor", def.strokecolor);
@@ -98,6 +99,7 @@ public class DynmapFactionsPlugin extends JavaPlugin {
                     homeicon = markerapi.getMarkerIcon("blueicon");
                 }
             }
+            boost = cfg.getBoolean(path+".boost", def.boost);
         }
 
         AreaStyle(FileConfiguration cfg, String path) {
@@ -114,6 +116,7 @@ public class DynmapFactionsPlugin extends JavaPlugin {
                     homeicon = markerapi.getMarkerIcon("blueicon");
                 }
             }
+            boost = cfg.getBoolean(path+".boost", false);
         }
     }
     
@@ -259,6 +262,7 @@ public class DynmapFactionsPlugin extends JavaPlugin {
         }
         m.setLineStyle(as.strokeweight, as.strokeopacity, sc);
         m.setFillStyle(as.fillopacity, fc);
+        m.setBoostFlag(as.boost);
     }
     
     private MarkerIcon getMarkerIcon(String factname, Faction fact) {

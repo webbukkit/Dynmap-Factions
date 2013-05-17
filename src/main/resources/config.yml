@@ -26,6 +26,7 @@ regionstyle:
   fillColor: "#FF0000"
   fillOpacity: 0.35
   homeicon: "redflag"
+  boost: false
   
 # Optional setting to limit which regions to show, by name - if commented out, all regions are shown
 # To show all regions on a given world, add 'world:<worldname>' to the list
@@ -40,6 +41,9 @@ custstyle:
   SafeZone:
     strokeColor: "#0000FF"
     fillColor: "#0000FF"
+    boost: false
   WarZone:
     strokeColor: "#404040"
     fillColor: "#404040"
+    boost: false
+    

@@ -32,20 +32,22 @@ import org.dynmap.markers.MarkerIcon;
 import org.dynmap.markers.MarkerSet;
 import org.dynmap.markers.PlayerSet;
 
-import com.massivecraft.factions.FPlayer;
 import com.massivecraft.factions.Factions;
-import com.massivecraft.factions.Board;
-import com.massivecraft.factions.Faction;
-import com.massivecraft.factions.event.FPlayerJoinEvent;
-import com.massivecraft.factions.event.FPlayerLeaveEvent;
-import com.massivecraft.factions.event.FactionCreateEvent;
-import com.massivecraft.factions.event.FactionDisbandEvent;
-import com.massivecraft.factions.event.FactionRenameEvent;
-import com.massivecraft.factions.event.LandClaimEvent;
-import com.massivecraft.factions.event.LandUnclaimAllEvent;
-import com.massivecraft.factions.event.LandUnclaimEvent;
-import com.massivecraft.factions.struct.FFlag;
-import com.massivecraft.factions.struct.TerritoryAccess;
+import com.massivecraft.factions.FFlag;
+import com.massivecraft.factions.TerritoryAccess;
+import com.massivecraft.factions.entity.Board;
+import com.massivecraft.factions.entity.BoardColls;
+import com.massivecraft.factions.entity.Faction;
+import com.massivecraft.factions.entity.FactionColl;
+import com.massivecraft.factions.entity.FactionColls;
+import com.massivecraft.factions.entity.UPlayer;
+import com.massivecraft.factions.event.FactionsEventChunkChange;
+import com.massivecraft.factions.event.FactionsEventCreate;
+import com.massivecraft.factions.event.FactionsEventDisband;
+import com.massivecraft.factions.event.FactionsEventHomeChange;
+import com.massivecraft.factions.event.FactionsEventMembershipChange;
+import com.massivecraft.factions.event.FactionsEventNameChange;
+import com.massivecraft.mcore.ps.PS;
 
 public class DynmapFactionsPlugin extends JavaPlugin {
     private static Logger log;
@@ -174,13 +176,15 @@ public class DynmapFactionsPlugin extends JavaPlugin {
             return;
         }
         Set<String> plids = new HashSet<String>();
-        Faction f = factapi.get(factid);    /* Get faction */
+        FactionColl fc = FactionColls.get().get(getServer().getConsoleSender());
+
+        Faction f = fc.getByName(factid);    /* Get faction */
         if(f != null) {
-            Set<FPlayer> ps = f.getFPlayers();
-            for(FPlayer fp : ps) {
+            List<UPlayer> ps = f.getUPlayers();
+            for(UPlayer fp : ps) {
                 plids.add(fp.getId());
             }
-            factid = f.getTag();
+            factid = f.getId();
         }
         String setid = "factions." + factid;
         PlayerSet set = markerapi.getPlayerSet(setid);  /* See if set exists */
@@ -201,35 +205,23 @@ public class DynmapFactionsPlugin extends JavaPlugin {
     
     private String formatInfoWindow(Faction fact) {
         String v = "<div class=\"regioninfo\">"+infowindow+"</div>";
-        v = v.replace("%regionname%", ChatColor.stripColor(fact.getTag()));
+        v = v.replace("%regionname%", ChatColor.stripColor(fact.getName()));
         v = v.replace("%description%", ChatColor.stripColor(fact.getDescription()));
-        FPlayer adm;
-        try {
-            adm = fact.getFPlayerAdmin();
-        } catch (NoSuchMethodError nsme) {
-            adm = fact.getFPlayerLeader();
-        }
+        UPlayer adm = fact.getLeader();
         v = v.replace("%playerowners%", (adm!=null)?adm.getName():"");
         String res = "";
-        for(FPlayer r : fact.getFPlayers()) {
+        for(UPlayer r : fact.getUPlayers()) {
         	if(res.length()>0) res += ", ";
         	res += r.getName();
         }
         v = v.replace("%playermembers%", res);
         
-        v = v.replace("%nation%", ChatColor.stripColor(fact.getTag()));
+        v = v.replace("%nation%", ChatColor.stripColor(fact.getName()));
         /* Build flags */
-        String flgs = "open: " + fact.getOpen();
-        try {
-            for(FFlag ff : FFlag.values()) {
-                flgs += "<br/>" + ff.getNicename() + ": " + fact.getFlag(ff);
-                v = v.replace("%flag." + ff.name() + "%", fact.getFlag(ff)?"true":"false");
-            }
-        } catch (NoClassDefFoundError ncdfe) {
-            flgs += "<br/>peaceful: " + fact.isPeaceful();
-            v = v.replace("%flag.PEACEFUL%", fact.isPeaceful()?"true":"false");
-            flgs += "<br/>peacefulExplosionsEnabled: " + fact.getPeacefulExplosionsEnabled();            
-            v = v.replace("%flag.EXPLOSIONS%", fact.getPeacefulExplosionsEnabled()?"true":"false");
+        String flgs = "open: " + fact.isOpen();
+        for(FFlag ff : FFlag.values()) {
+            flgs += "<br/>" + ff.getNicename() + ": " + fact.getFlag(ff);
+            v = v.replace("%flag." + ff.name() + "%", fact.getFlag(ff)?"true":"false");
         }
         v = v.replace("%flags%", flgs);
         return v;
@@ -476,54 +468,41 @@ public class DynmapFactionsPlugin extends JavaPlugin {
         Map<String,AreaMarker> newmap = new HashMap<String,AreaMarker>(); /* Build new map */
         Map<String,Marker> newmark = new HashMap<String,Marker>(); /* Build new map */
         
-        /* Get board in save format - not good, but best option for traversing the data
-         * Map by world, with Map by coordinate pair ("x,z") with value of faction ID */
-        Map<String, Map<String, TerritoryAccess>> mapdata = Board.dumpAsSaveFormat();
         /* Parse into faction centric mapping, split by world */
         Map<String, FactionBlocks> blocks_by_faction = new HashMap<String, FactionBlocks>();
-        for(Map.Entry<String, Map<String,TerritoryAccess>> me : mapdata.entrySet()) {
-            String world = me.getKey();
-            for(Map.Entry<String,TerritoryAccess> be : me.getValue().entrySet()) {
-                String coord = be.getKey();
-                Object ta = be.getValue();
-                String fact;
-                if(ta instanceof String) {
-                    fact = (String)ta;
-                }
-                else {
-                    fact = ((TerritoryAccess)ta).getHostFactionID();
-                }
-                FactionBlocks factblocks = blocks_by_faction.get(fact); /* Look up faction */
-                if(factblocks == null) {    /* Create faction block if first time */
-                    factblocks = new FactionBlocks();
-                    blocks_by_faction.put(fact, factblocks);
-                }
+        FactionColl fc = FactionColls.get().get(getServer().getConsoleSender());
+        Collection<Faction> facts = fc.getAll();
+        
+        for (Faction fact : facts) {
+            Set<PS> chunks = BoardColls.get().getChunks(fact);
+            String fid = fact.getId();
+            FactionBlocks factblocks = blocks_by_faction.get(fid); /* Look up faction */
+            if(factblocks == null) {    /* Create faction block if first time */
+                factblocks = new FactionBlocks();
+                blocks_by_faction.put(fid, factblocks);
+            }
+            
+            for (PS cc : chunks) {
+                String world = cc.getWorld();
+
                 /* Get block set for given world */
                 LinkedList<FactionBlock> blocks = factblocks.blocks.get(world);
                 if(blocks == null) {
                     blocks = new LinkedList<FactionBlock>();
                     factblocks.blocks.put(world, blocks);
                 }
-                /* Parse coords */
-                String[] split = coord.split(",");
-                if(split.length == 2) {
-                    try {
-                        FactionBlock fb = new FactionBlock();
-                        fb.x = Integer.valueOf(split[0]);
-                        fb.z = Integer.valueOf(split[1]);
-                        blocks.add(fb); /* Add to list */
-                    } catch (NumberFormatException nfx) {
-                    }
-                }
+                FactionBlock fb = new FactionBlock();
+                fb.x = cc.getChunkX();
+                fb.z = cc.getChunkZ();
+                blocks.add(fb); /* Add to list */
             }
         }
         /* Loop through factions */
-        Collection<Faction> facts = factapi.get();
         for(Faction fact : facts) {
-            String factname = ChatColor.stripColor(fact.getTag());
+            String factname = ChatColor.stripColor(fact.getName());
+            FactionBlocks factblocks = blocks_by_faction.get(fact.getId()); /* Look up faction */
+            if (factblocks == null) continue;
             
-            FactionBlocks factblocks = blocks_by_faction.get(fact.getId());
-            if(factblocks == null) continue;
             /* Loop through each world that faction has blocks on */
             for(Map.Entry<String, LinkedList<FactionBlock>>  worldblocks : factblocks.blocks.entrySet()) {
                 handleFactionOnWorld(factname, fact, worldblocks.getKey(), worldblocks.getValue(), newmap, newmark);
@@ -531,7 +510,7 @@ public class DynmapFactionsPlugin extends JavaPlugin {
             factblocks.blocks.clear();
             
             /* Now, add marker for home location */
-            Location homeloc = fact.getHome();
+            PS homeloc = fact.getHome();
             if(homeloc != null) {
                 String markid = factname + "__home";
                 MarkerIcon ico = getMarkerIcon(factname, fact);
@@ -539,11 +518,11 @@ public class DynmapFactionsPlugin extends JavaPlugin {
                     Marker home = resmark.remove(markid);
                     String lbl = factname + " [home]";
                     if(home == null) {
-                        home = set.createMarker(markid, lbl, homeloc.getWorld().getName(), 
-                            homeloc.getX(), homeloc.getY(), homeloc.getZ(), ico, false);
+                        home = set.createMarker(markid, lbl, homeloc.getWorld(), 
+                            homeloc.getBlockX(), homeloc.getBlockY(), homeloc.getBlockZ(), ico, false);
                     }
                     else {
-                        home.setLocation(homeloc.getWorld().getName(), homeloc.getX(), homeloc.getY(), homeloc.getZ());
+                        home.setLocation(homeloc.getWorld(), homeloc.getBlockX(), homeloc.getBlockY(), homeloc.getBlockZ());
                         home.setLabel(lbl);   /* Update label */
                         home.setMarkerIcon(ico);
                     }
@@ -570,7 +549,8 @@ public class DynmapFactionsPlugin extends JavaPlugin {
     
     private void updatePlayerSets() {
         if(playersets) {
-            for(Faction f : factapi.get()) {
+            FactionColl fc = FactionColls.get().get(getServer().getConsoleSender());
+            for(Faction f : fc.getAll()) {
                 updatePlayerSet(f.getId());
             }
         }
@@ -587,21 +567,14 @@ public class DynmapFactionsPlugin extends JavaPlugin {
             }
         }
         @EventHandler(priority=EventPriority.MONITOR)
-        public void onFPlayerJoin(FPlayerJoinEvent event) {
+        public void onFPlayerJoin(FactionsEventMembershipChange event) {
             if(event.isCancelled())
                 return;
             if(playersets)
-                requestUpdatePlayerSet(event.getFaction().getId());
+                requestUpdatePlayerSet(event.getNewFaction().getId());
         }
         @EventHandler(priority=EventPriority.MONITOR)
-        public void onFPlayerLeave(FPlayerLeaveEvent event) {
-            if(event.isCancelled())
-                return;
-            if(playersets)
-                requestUpdatePlayerSet(event.getFaction().getId());
-        }
-        @EventHandler(priority=EventPriority.MONITOR)
-        public void onFactionCreate(FactionCreateEvent event) {
+        public void onFactionCreate(FactionsEventCreate event) {
             if(event.isCancelled())
                 return;
             if(playersets)
@@ -609,7 +582,7 @@ public class DynmapFactionsPlugin extends JavaPlugin {
             requestUpdateFactions();
         }
         @EventHandler(priority=EventPriority.MONITOR)
-        public void onFactionDisband(FactionDisbandEvent event) {
+        public void onFactionDisband(FactionsEventDisband event) {
             if(event.isCancelled())
                 return;
             if(playersets)
@@ -617,25 +590,21 @@ public class DynmapFactionsPlugin extends JavaPlugin {
             requestUpdateFactions();
         }
         @EventHandler(priority=EventPriority.MONITOR)
-        public void onFactionRename(FactionRenameEvent event) {
+        public void onFactionRename(FactionsEventNameChange event) {
             if(event.isCancelled())
                 return;
             requestUpdateFactions();
         }
         @EventHandler(priority=EventPriority.MONITOR)
-        public void onLandClaim(LandClaimEvent event) {
+        public void onFactionRename(FactionsEventHomeChange event) {
             if(event.isCancelled())
                 return;
             requestUpdateFactions();
         }
         @EventHandler(priority=EventPriority.MONITOR)
-        public void onLandUnclaim(LandUnclaimEvent event) {
+        public void onFactionRename(FactionsEventChunkChange event) {
             if(event.isCancelled())
                 return;
-            requestUpdateFactions();
-        }
-        @EventHandler(priority=EventPriority.MONITOR)
-        public void onLandUnclaimAll(LandUnclaimAllEvent event) {
             requestUpdateFactions();
         }
     }
@@ -658,8 +627,6 @@ public class DynmapFactionsPlugin extends JavaPlugin {
         }
         factions = p;
 
-        getServer().getPluginManager().registerEvents(new OurServerListener(), this);        
-
         /* If both enabled, activate */
         if(dynmap.isEnabled() && factions.isEnabled())
             activate();
@@ -680,7 +647,7 @@ public class DynmapFactionsPlugin extends JavaPlugin {
             return;
         }
         /* Connect to factions API */
-        factapi = Factions.i;
+        factapi = Factions.get();
         
         blocksize = 16; /* Fixed at 16 */
         
@@ -762,6 +729,7 @@ public class DynmapFactionsPlugin extends JavaPlugin {
         stop = false;
         
         getServer().getScheduler().scheduleSyncDelayedTask(this, new FactionsUpdate(), 40);   /* First time is 2 seconds */
+        getServer().getPluginManager().registerEvents(new OurServerListener(), this);        
         
         info("version " + this.getDescription().getVersion() + " is activated");
     }

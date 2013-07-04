@@ -519,10 +519,10 @@ public class DynmapFactionsPlugin extends JavaPlugin {
                         String lbl = factname + " [home]";
                         if(home == null) {
                             home = set.createMarker(markid, lbl, homeloc.getWorld(), 
-                                    homeloc.getBlockX(), homeloc.getBlockY(), homeloc.getBlockZ(), ico, false);
+                                    homeloc.getLocationX(), homeloc.getLocationY(), homeloc.getLocationZ(), ico, false);
                         }
                         else {
-                            home.setLocation(homeloc.getWorld(), homeloc.getBlockX(), homeloc.getBlockY(), homeloc.getBlockZ());
+                            home.setLocation(homeloc.getWorld(), homeloc.getLocationX(), homeloc.getLocationY(), homeloc.getLocationZ());
                             home.setLabel(lbl);   /* Update label */
                             home.setMarkerIcon(ico);
                         }

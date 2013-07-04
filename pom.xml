@@ -2,7 +2,13 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.dynmap</groupId>
   <artifactId>Dynmap-Factions</artifactId>
-  <version>0.70</version>
+  <version>0.80</version>
+  	<properties>
+	   	<timestamp>${maven.build.timestamp}</timestamp>
+   		<maven.build.timestamp.format>yyyyMMddHHmm</maven.build.timestamp.format>	
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<BUILD_NUMBER>Dev${timestamp}</BUILD_NUMBER>
+	</properties>
   
     <build>
   	  <resources>
@@ -81,7 +87,4 @@
   		<systemPath>${project.basedir}/mcore-6.4.0.jar</systemPath>
   	</dependency>
   </dependencies>
-  <properties>
-  	<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-  </properties>
 </project>

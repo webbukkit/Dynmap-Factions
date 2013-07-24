@@ -1,6 +1,6 @@
 name: Dynmap-Factions
 main: org.dynmap.factions.DynmapFactionsPlugin
-version: "${project.version}"
+version: "${project.version}-${BUILD_NUMBER} (for Factions v1.8.x)"
 author: mikeprimm
 depend: [ dynmap, Factions ]
 

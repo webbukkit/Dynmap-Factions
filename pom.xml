@@ -1,8 +1,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.dynmap</groupId>
-  <artifactId>Dynmap-Factions</artifactId>
-  <version>0.50</version>
+  <artifactId>Dynmap-Factions-1.8.x</artifactId>
   
     <build>
   	  <resources>
@@ -77,4 +76,5 @@
   <properties>
   	<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
+  <version>0.71</version>
 </project>

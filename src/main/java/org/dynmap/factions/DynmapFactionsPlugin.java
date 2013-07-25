@@ -170,8 +170,8 @@ public class DynmapFactionsPlugin extends JavaPlugin {
     }
 
     private void updatePlayerSet(String univid, String factid) {
-        /* If Wilderness or other unassociated factions, skip */
-        if(factid.equals("0") || factid.startsWith("-")) {
+        /* If Wilderness or other unassociated factions (guid-style ID), skip */
+        if(factid.indexOf('-') >= 0) {
             return;
         }
         Set<String> plids = new HashSet<String>();
@@ -551,6 +551,9 @@ public class DynmapFactionsPlugin extends JavaPlugin {
         if(playersets) {
             for (FactionColl fc : FactionColls.get().getColls()) {
                 for(Faction f : fc.getAll()) {
+                    if ((f == fc.getNone()) || (f == fc.getWarzone()) || (f == fc.getSafezone())) {
+                        continue;
+                    }
                     updatePlayerSet(fc.getUniverse(), f.getId());
                 }
             }

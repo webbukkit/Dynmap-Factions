@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.dynmap</groupId>
   <artifactId>Dynmap-Factions</artifactId>
-  <version>0.71</version>
+  <version>0.72</version>
   	<properties>
 	   	<timestamp>${maven.build.timestamp}</timestamp>
    		<maven.build.timestamp.format>yyyyMMddHHmm</maven.build.timestamp.format>	

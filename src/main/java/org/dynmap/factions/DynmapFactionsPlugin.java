@@ -512,7 +512,7 @@ public class DynmapFactionsPlugin extends JavaPlugin {
                 /* Now, add marker for home location */
                 PS homeloc = fact.getHome();
                 if(homeloc != null) {
-                    String markid = factname + "__home";
+                    String markid = fc.getUniverse() + "_" + factname + "__home";
                     MarkerIcon ico = getMarkerIcon(factname, fact);
                     if(ico != null) {
                         Marker home = resmark.remove(markid);
@@ -526,8 +526,10 @@ public class DynmapFactionsPlugin extends JavaPlugin {
                             home.setLabel(lbl);   /* Update label */
                             home.setMarkerIcon(ico);
                         }
-                        home.setDescription(formatInfoWindow(fact)); /* Set popup */
-                        newmark.put(markid, home);
+                        if (home != null) {
+                            home.setDescription(formatInfoWindow(fact)); /* Set popup */
+                            newmark.put(markid, home);
+                        }
                     }
                 }
             }

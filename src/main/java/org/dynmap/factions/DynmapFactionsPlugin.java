@@ -164,6 +164,7 @@ public class DynmapFactionsPlugin extends JavaPlugin {
         if(pending == null) {
             FactionsUpdate upd = new FactionsUpdate();
             upd.runonce = true;
+            pending = upd;
             getServer().getScheduler().scheduleSyncDelayedTask(this, upd, 20);
         }
     }

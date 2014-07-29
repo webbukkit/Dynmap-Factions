@@ -38,13 +38,13 @@ import com.massivecraft.factions.entity.Faction;
 import com.massivecraft.factions.entity.FactionColl;
 import com.massivecraft.factions.entity.FactionColls;
 import com.massivecraft.factions.entity.UPlayer;
-import com.massivecraft.factions.event.FactionsEventChunkChange;
-import com.massivecraft.factions.event.FactionsEventCreate;
-import com.massivecraft.factions.event.FactionsEventDisband;
-import com.massivecraft.factions.event.FactionsEventHomeChange;
-import com.massivecraft.factions.event.FactionsEventMembershipChange;
-import com.massivecraft.factions.event.FactionsEventNameChange;
-import com.massivecraft.mcore.ps.PS;
+import com.massivecraft.factions.event.EventFactionsChunkChange;
+import com.massivecraft.factions.event.EventFactionsCreate;
+import com.massivecraft.factions.event.EventFactionsDisband;
+import com.massivecraft.factions.event.EventFactionsHomeChange;
+import com.massivecraft.factions.event.EventFactionsMembershipChange;
+import com.massivecraft.factions.event.EventFactionsNameChange;
+import com.massivecraft.massivecore.ps.PS;
 
 public class DynmapFactionsPlugin extends JavaPlugin {
     private static Logger log;
@@ -574,7 +574,7 @@ public class DynmapFactionsPlugin extends JavaPlugin {
             }
         }
         @EventHandler(priority=EventPriority.MONITOR)
-        public void onFPlayerJoin(FactionsEventMembershipChange event) {
+        public void onFPlayerJoin(EventFactionsMembershipChange event) {
             if(event.isCancelled())
                 return;
             if(playersets) {
@@ -583,7 +583,7 @@ public class DynmapFactionsPlugin extends JavaPlugin {
             }
         }
         @EventHandler(priority=EventPriority.MONITOR)
-        public void onFactionCreate(FactionsEventCreate event) {
+        public void onFactionCreate(EventFactionsCreate event) {
             if(event.isCancelled())
                 return;
             if(playersets)
@@ -591,7 +591,7 @@ public class DynmapFactionsPlugin extends JavaPlugin {
             requestUpdateFactions();
         }
         @EventHandler(priority=EventPriority.MONITOR)
-        public void onFactionDisband(FactionsEventDisband event) {
+        public void onFactionDisband(EventFactionsDisband event) {
             if(event.isCancelled())
                 return;
             if(playersets) {
@@ -601,19 +601,19 @@ public class DynmapFactionsPlugin extends JavaPlugin {
             requestUpdateFactions();
         }
         @EventHandler(priority=EventPriority.MONITOR)
-        public void onFactionRename(FactionsEventNameChange event) {
+        public void onFactionRename(EventFactionsNameChange event) {
             if(event.isCancelled())
                 return;
             requestUpdateFactions();
         }
         @EventHandler(priority=EventPriority.MONITOR)
-        public void onFactionRename(FactionsEventHomeChange event) {
+        public void onFactionRename(EventFactionsHomeChange event) {
             if(event.isCancelled())
                 return;
             requestUpdateFactions();
         }
         @EventHandler(priority=EventPriority.MONITOR)
-        public void onFactionRename(FactionsEventChunkChange event) {
+        public void onFactionRename(EventFactionsChunkChange event) {
             if(event.isCancelled())
                 return;
             requestUpdateFactions();

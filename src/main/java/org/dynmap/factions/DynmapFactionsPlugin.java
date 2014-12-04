@@ -32,13 +32,13 @@ import org.dynmap.markers.MarkerSet;
 import org.dynmap.markers.PlayerSet;
 
 import com.massivecraft.factions.Factions;
-import com.massivecraft.factions.FFlag;
-import com.massivecraft.factions.entity.BoardColls;
+import com.massivecraft.factions.entity.BoardColl;
 import com.massivecraft.factions.entity.Faction;
 import com.massivecraft.factions.entity.FactionColl;
-import com.massivecraft.factions.entity.FactionColls;
-import com.massivecraft.factions.entity.UPlayer;
-import com.massivecraft.factions.event.EventFactionsChunkChange;
+import com.massivecraft.factions.entity.MFlag;
+import com.massivecraft.factions.entity.MFlagColl;
+import com.massivecraft.factions.entity.MPlayer;
+import com.massivecraft.factions.event.EventFactionsChunksChange;
 import com.massivecraft.factions.event.EventFactionsCreate;
 import com.massivecraft.factions.event.EventFactionsDisband;
 import com.massivecraft.factions.event.EventFactionsHomeChange;
@@ -143,20 +143,18 @@ public class DynmapFactionsPlugin extends JavaPlugin {
 
     private class PlayerSetUpdate implements Runnable {
         public String faction;
-        public String univ;
-        public PlayerSetUpdate(String univ, String fid) {
-            this.univ = univ;
+        public PlayerSetUpdate(String fid) {
             faction = fid;
         }
         public void run() {
             if(!stop)
-                updatePlayerSet(univ, faction);
+                updatePlayerSet(faction);
         }
     }
     
-    private void requestUpdatePlayerSet(String univid, String factid) {
+    private void requestUpdatePlayerSet(String factid) {
         if(playersets)
-            getServer().getScheduler().scheduleSyncDelayedTask(this, new PlayerSetUpdate(univid, factid));
+            getServer().getScheduler().scheduleSyncDelayedTask(this, new PlayerSetUpdate(factid));
     }
 
     private FactionsUpdate pending = null;
@@ -170,27 +168,27 @@ public class DynmapFactionsPlugin extends JavaPlugin {
         }
     }
 
-    private void updatePlayerSet(String univid, String factid) {
+    private void updatePlayerSet(String factid) {
         /* If Wilderness or other unassociated factions (guid-style ID), skip */
         if(factid.indexOf('-') >= 0) {
             return;
         }
         Set<String> plids = new HashSet<String>();
-        FactionColl fc = FactionColls.get().getForUniverse(univid);
+        FactionColl fc = FactionColl.get();
 
         Faction f = fc.getByName(factid);    /* Get faction */
         if(f != null) {
-            List<UPlayer> ps = f.getUPlayers();
-            for(UPlayer fp : ps) {
+            List<MPlayer> ps = f.getMPlayers();
+            for(MPlayer fp : ps) {
                 plids.add(fp.getId());
             }
             factid = f.getId();
         }
-        String setid = "factions." + univid + "." + factid;
+        String setid = "factions." + factid;
         PlayerSet set = markerapi.getPlayerSet(setid);  /* See if set exists */
         if((set == null) && (f != null)) {
             set = markerapi.createPlayerSet(setid, true, plids, false);
-            info("Added player visibility set '" + setid + "' for faction " + univid + "." + factid);
+            info("Added player visibility set '" + setid + "' for faction " + factid);
         }
         else if(f != null) {
             set.setPlayers(plids);
@@ -207,10 +205,10 @@ public class DynmapFactionsPlugin extends JavaPlugin {
         String v = "<div class=\"regioninfo\">"+infowindow+"</div>";
         v = v.replace("%regionname%", ChatColor.stripColor(fact.getName()));
         v = v.replace("%description%", ChatColor.stripColor(fact.getDescription()));
-        UPlayer adm = fact.getLeader();
+        MPlayer adm = fact.getLeader();
         v = v.replace("%playerowners%", (adm!=null)?adm.getName():"");
         String res = "";
-        for(UPlayer r : fact.getUPlayers()) {
+        for(MPlayer r : fact.getMPlayers()) {
         	if(res.length()>0) res += ", ";
         	res += r.getName();
         }
@@ -218,10 +216,10 @@ public class DynmapFactionsPlugin extends JavaPlugin {
         
         v = v.replace("%nation%", ChatColor.stripColor(fact.getName()));
         /* Build flags */
-        String flgs = "open: " + fact.isOpen();
-        for(FFlag ff : FFlag.values()) {
-            flgs += "<br/>" + ff.getNicename() + ": " + fact.getFlag(ff);
-            v = v.replace("%flag." + ff.name() + "%", fact.getFlag(ff)?"true":"false");
+        String flgs = "";
+        for(MFlag ff : MFlagColl.get().getAll()) {
+            flgs += "<br/>" + ff.getName() + ": " + fact.getFlag(ff);
+            v = v.replace("%flag." + ff.getName() + "%", fact.getFlag(ff)?"true":"false");
         }
         v = v.replace("%flags%", flgs);
         return v;
@@ -471,10 +469,10 @@ public class DynmapFactionsPlugin extends JavaPlugin {
         /* Parse into faction centric mapping, split by world */
         Map<String, FactionBlocks> blocks_by_faction = new HashMap<String, FactionBlocks>();
  
-        for (FactionColl fc : FactionColls.get().getColls()) {
+        FactionColl fc = FactionColl.get();
             Collection<Faction> facts = fc.getAll();
             for (Faction fact : facts) {
-                Set<PS> chunks = BoardColls.get().getChunks(fact);
+                Set<PS> chunks = BoardColl.get().getChunks(fact);
                 String fid = fc.getUniverse() + "_" + fact.getId();
                 FactionBlocks factblocks = blocks_by_faction.get(fid); /* Look up faction */
                 if(factblocks == null) {    /* Create faction block if first time */
@@ -533,7 +531,6 @@ public class DynmapFactionsPlugin extends JavaPlugin {
                         }
                     }
                 }
-            }
         }
         blocks_by_faction.clear();
         
@@ -552,13 +549,12 @@ public class DynmapFactionsPlugin extends JavaPlugin {
     
     private void updatePlayerSets() {
         if(playersets) {
-            for (FactionColl fc : FactionColls.get().getColls()) {
-                for(Faction f : fc.getAll()) {
-                    if ((f == fc.getNone()) || (f == fc.getWarzone()) || (f == fc.getSafezone())) {
-                        continue;
-                    }
-                    updatePlayerSet(fc.getUniverse(), f.getId());
+            FactionColl fc = FactionColl.get();
+            for(Faction f : fc.getAll()) {
+                if ((f == fc.getNone()) || (f == fc.getWarzone()) || (f == fc.getSafezone())) {
+                    continue;
                 }
+                updatePlayerSet(f.getId());
             }
         }
     }
@@ -579,7 +575,7 @@ public class DynmapFactionsPlugin extends JavaPlugin {
                 return;
             if(playersets) {
                 Faction f = event.getNewFaction();
-                requestUpdatePlayerSet(f.getUniverse(), f.getId());
+                requestUpdatePlayerSet(f.getId());
             }
         }
         @EventHandler(priority=EventPriority.MONITOR)
@@ -587,7 +583,7 @@ public class DynmapFactionsPlugin extends JavaPlugin {
             if(event.isCancelled())
                 return;
             if(playersets)
-                requestUpdatePlayerSet(event.getUniverse(), event.getFactionId());
+                requestUpdatePlayerSet(event.getFactionId());
             requestUpdateFactions();
         }
         @EventHandler(priority=EventPriority.MONITOR)
@@ -596,7 +592,7 @@ public class DynmapFactionsPlugin extends JavaPlugin {
                 return;
             if(playersets) {
                 Faction f = event.getFaction();
-                requestUpdatePlayerSet(f.getUniverse(), f.getId());
+                requestUpdatePlayerSet(f.getId());
             }
             requestUpdateFactions();
         }
@@ -613,7 +609,7 @@ public class DynmapFactionsPlugin extends JavaPlugin {
             requestUpdateFactions();
         }
         @EventHandler(priority=EventPriority.MONITOR)
-        public void onFactionRename(EventFactionsChunkChange event) {
+        public void onFactionRename(EventFactionsChunksChange event) {
             if(event.isCancelled())
                 return;
             requestUpdateFactions();

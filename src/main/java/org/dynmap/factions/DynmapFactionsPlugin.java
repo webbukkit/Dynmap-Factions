@@ -1,18 +1,9 @@
 package org.dynmap.factions;
 
-import java.io.IOException;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
+import com.massivecraft.factions.Factions;
+import com.massivecraft.factions.entity.*;
+import com.massivecraft.factions.event.*;
+import com.massivecraft.massivecore.ps.PS;
 import org.bukkit.ChatColor;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -20,31 +11,16 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.server.PluginEnableEvent;
-import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
+import org.bukkit.plugin.java.JavaPlugin;
 import org.dynmap.DynmapAPI;
-import org.dynmap.markers.AreaMarker;
-import org.dynmap.markers.Marker;
-import org.dynmap.markers.MarkerAPI;
-import org.dynmap.markers.MarkerIcon;
-import org.dynmap.markers.MarkerSet;
-import org.dynmap.markers.PlayerSet;
+import org.dynmap.markers.*;
 
-import com.massivecraft.factions.Factions;
-import com.massivecraft.factions.entity.BoardColl;
-import com.massivecraft.factions.entity.Faction;
-import com.massivecraft.factions.entity.FactionColl;
-import com.massivecraft.factions.entity.MFlag;
-import com.massivecraft.factions.entity.MFlagColl;
-import com.massivecraft.factions.entity.MPlayer;
-import com.massivecraft.factions.event.EventFactionsChunksChange;
-import com.massivecraft.factions.event.EventFactionsCreate;
-import com.massivecraft.factions.event.EventFactionsDisband;
-import com.massivecraft.factions.event.EventFactionsHomeChange;
-import com.massivecraft.factions.event.EventFactionsMembershipChange;
-import com.massivecraft.factions.event.EventFactionsNameChange;
-import com.massivecraft.massivecore.ps.PS;
+import java.io.IOException;
+import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class DynmapFactionsPlugin extends JavaPlugin {
     private static Logger log;
@@ -204,7 +180,10 @@ public class DynmapFactionsPlugin extends JavaPlugin {
     private String formatInfoWindow(Faction fact) {
         String v = "<div class=\"regioninfo\">"+infowindow+"</div>";
         v = v.replace("%regionname%", ChatColor.stripColor(fact.getName()));
-        v = v.replace("%description%", ChatColor.stripColor(fact.getDescription()));
+        // The describe can be null or empty
+        if (fact.getDescription() != null) {
+            v = v.replace("%description%", ChatColor.stripColor(fact.getDescription()));
+        }
         MPlayer adm = fact.getLeader();
         v = v.replace("%playerowners%", (adm!=null)?adm.getName():"");
         String res = "";
@@ -508,26 +487,31 @@ public class DynmapFactionsPlugin extends JavaPlugin {
                 }
                 factblocks.blocks.clear();
 
-                /* Now, add marker for home location */
-                PS homeloc = fact.getHome();
-                if(homeloc != null) {
-                    String markid = fc.getUniverse() + "_" + factname + "__home";
-                    MarkerIcon ico = getMarkerIcon(factname, fact);
+                /* Now, add marker for warp location */
+                for (Map.Entry<String, Warp> warpset : fact.getWarps().entrySet()) {
+                    final String markid = warpset.getKey();
+                    final Warp warp = warpset.getValue();
+                    getLogger().info("Warp found: " + warpset.getKey());
+                    final MarkerIcon ico = getMarkerIcon(factname, fact);
                     if(ico != null) {
-                        Marker home = resmark.remove(markid);
-                        String lbl = factname + " [home]";
-                        if(home == null) {
-                            home = set.createMarker(markid, lbl, homeloc.getWorld(), 
-                                    homeloc.getLocationX(), homeloc.getLocationY(), homeloc.getLocationZ(), ico, false);
+                        final PS pos = warp.getLocation();
+                        final String updatedLabel = factname + " [warp]";
+
+                        Marker marker = resmark.remove(markid);
+                        if(marker == null) {
+                            getLogger().info("oid: " + markid + ", world: " + warp.getWorld() + ", x: " + pos.getBlockX() + ", y: " + pos.getBlockY() + ", z: " + pos.getBlockZ());
+                            marker = set.createMarker(markid, updatedLabel, warp.getWorld(), pos.getBlockX(), pos.getBlockY(), pos.getBlockZ(), ico, false);
                         }
                         else {
-                            home.setLocation(homeloc.getWorld(), homeloc.getLocationX(), homeloc.getLocationY(), homeloc.getLocationZ());
-                            home.setLabel(lbl);   /* Update label */
-                            home.setMarkerIcon(ico);
+                            marker.setLocation(warp.getWorld(),  pos.getBlockX(), pos.getBlockY(), pos.getBlockZ());
+                            marker.setLabel(updatedLabel);
+                            marker.setMarkerIcon(ico);
                         }
-                        if (home != null) {
-                            home.setDescription(formatInfoWindow(fact)); /* Set popup */
-                            newmark.put(markid, home);
+
+                        if (marker != null) {
+                            // Set popup
+                            marker.setDescription(formatInfoWindow(fact));
+                            newmark.put(markid, marker);
                         }
                     }
                 }
@@ -603,7 +587,13 @@ public class DynmapFactionsPlugin extends JavaPlugin {
             requestUpdateFactions();
         }
         @EventHandler(priority=EventPriority.MONITOR)
-        public void onFactionRename(EventFactionsHomeChange event) {
+        public void onFactionRename(EventFactionsWarpAdd event) {
+            if(event.isCancelled())
+                return;
+            requestUpdateFactions();
+        }
+        @EventHandler(priority=EventPriority.MONITOR)
+        public void onFactionRename(EventFactionsWarpRemove event) {
             if(event.isCancelled())
                 return;
             requestUpdateFactions();

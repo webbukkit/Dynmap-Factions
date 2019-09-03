@@ -48,8 +48,8 @@
 			</releases>
 			<snapshots>
 			</snapshots>
-			<id>bukkit-repo</id>
-			<url>http://repo.bukkit.org/content/repositories/releases/</url>
+			<id>tropweb-repo</id>
+			<url>https://repo.tropweb.fr/</url>
 		</repository>
 		<repository>
 			<releases>
@@ -76,15 +76,11 @@
   		<groupId>com.massivecraft.Factions</groupId>
   		<artifactId>Factions</artifactId>
 		<version>3.2.3</version>
-  		<scope>system</scope>
-  		<systemPath>${project.basedir}/Factions.jar</systemPath>
   	</dependency>
   	<dependency>
   		<groupId>com.massivecraft.MassiveCore</groupId>
   		<artifactId>MassiveCore</artifactId>
   		<version>3.2.3</version>
-  		<scope>system</scope>
-  		<systemPath>${project.basedir}/MassiveCore.jar</systemPath>
   	</dependency>
   </dependencies>
 </project>

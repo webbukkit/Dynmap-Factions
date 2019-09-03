@@ -442,93 +442,94 @@ public class DynmapFactionsPlugin extends JavaPlugin {
     
     /* Update Factions information */
     private void updateFactions() {
-        Map<String,AreaMarker> newmap = new HashMap<String,AreaMarker>(); /* Build new map */
-        Map<String,Marker> newmark = new HashMap<String,Marker>(); /* Build new map */
+        Map<String, AreaMarker> newmap = new HashMap<String,AreaMarker>(); /* Build new map */
+        Map<String, Marker> newmark = new HashMap<String,Marker>(); /* Build new map */
         
         /* Parse into faction centric mapping, split by world */
         Map<String, FactionBlocks> blocks_by_faction = new HashMap<String, FactionBlocks>();
  
         FactionColl fc = FactionColl.get();
-            Collection<Faction> facts = fc.getAll();
-            for (Faction fact : facts) {
-                Set<PS> chunks = BoardColl.get().getChunks(fact);
-                String fid = fc.getUniverse() + "_" + fact.getId();
-                FactionBlocks factblocks = blocks_by_faction.get(fid); /* Look up faction */
-                if(factblocks == null) {    /* Create faction block if first time */
-                    factblocks = new FactionBlocks();
-                    blocks_by_faction.put(fid, factblocks);
+        Collection<Faction> facts = fc.getAll();
+        for (Faction fact : facts) {
+            Set<PS> chunks = BoardColl.get().getChunks(fact);
+            String fid = fc.getUniverse() + "_" + fact.getId();
+            FactionBlocks factblocks = blocks_by_faction.get(fid); /* Look up faction */
+            if(factblocks == null) {    /* Create faction block if first time */
+                factblocks = new FactionBlocks();
+                blocks_by_faction.put(fid, factblocks);
+            }
+
+            for (final PS cc : chunks) {
+                final String world = cc.getWorld();
+
+                /* Get block set for given world */
+                LinkedList<FactionBlock> blocks = factblocks.blocks.get(world);
+                if(blocks == null) {
+                    blocks = new LinkedList<FactionBlock>();
+                    factblocks.blocks.put(world, blocks);
                 }
 
-                for (PS cc : chunks) {
-                    String world = cc.getWorld();
+                FactionBlock fb = new FactionBlock();
+                fb.x = cc.getChunkX();
+                fb.z = cc.getChunkZ();
+                blocks.add(fb); /* Add to list */
+            }
+        }
+        /* Loop through factions */
+        for (final Faction fact : facts) {
+            final String factname = ChatColor.stripColor(fact.getName());
+            final String fid = new StringBuilder().append(fc.getUniverse()).append("_").append(fact.getId()).toString();
+            final FactionBlocks factblocks = blocks_by_faction.get(fid); /* Look up faction */
+            if (factblocks == null) continue;
 
-                    /* Get block set for given world */
-                    LinkedList<FactionBlock> blocks = factblocks.blocks.get(world);
-                    if(blocks == null) {
-                        blocks = new LinkedList<FactionBlock>();
-                        factblocks.blocks.put(world, blocks);
+            /* Loop through each world that faction has blocks on */
+            for (Map.Entry<String, LinkedList<FactionBlock>>  worldblocks : factblocks.blocks.entrySet()) {
+                handleFactionOnWorld(factname, fact, worldblocks.getKey(), worldblocks.getValue(), newmap, newmark);
+            }
+            factblocks.blocks.clear();
+
+            /* Now, add marker for warp location */
+            for (Map.Entry<String, Warp> warpSet : fact.getWarps().entrySet()) {
+                final String oid = warpSet.getKey();
+                final Warp warp = warpSet.getValue();
+                final MarkerIcon ico = getMarkerIcon(factname, fact);
+                if(ico != null) {
+                    final PS pos = warp.getLocation();
+                    final Double lx = pos.getLocationX();
+                    final Double ly = pos.getLocationY();
+                    final Double lz = pos.getLocationZ();
+                    final String labelName = new StringBuilder("[Warp] ").append(factname).append(" - ").append(warp.getName()).toString();
+
+                    Marker marker = resmark.remove(oid);
+                    if(marker == null) {
+                        marker = set.createMarker(oid, labelName, warp.getWorld(), lx, ly, lz, ico, false);
                     }
-                    FactionBlock fb = new FactionBlock();
-                    fb.x = cc.getChunkX();
-                    fb.z = cc.getChunkZ();
-                    blocks.add(fb); /* Add to list */
+                    else {
+                        marker.setLocation(warp.getWorld(), lx, ly, lz);
+                        marker.setLabel(labelName);
+                        marker.setMarkerIcon(ico);
+                    }
+
+                    if (marker != null) {
+                        // Set popup
+                        marker.setDescription(formatInfoWindow(fact));
+                        newmark.put(oid, marker);
+                    }
                 }
             }
-            /* Loop through factions */
-            for(Faction fact : facts) {
-                String factname = ChatColor.stripColor(fact.getName());
-                String fid = fc.getUniverse() + "_" + fact.getId();
-                FactionBlocks factblocks = blocks_by_faction.get(fid); /* Look up faction */
-                if (factblocks == null) continue;
-
-                /* Loop through each world that faction has blocks on */
-                for(Map.Entry<String, LinkedList<FactionBlock>>  worldblocks : factblocks.blocks.entrySet()) {
-                    handleFactionOnWorld(factname, fact, worldblocks.getKey(), worldblocks.getValue(), newmap, newmark);
-                }
-                factblocks.blocks.clear();
-
-                /* Now, add marker for warp location */
-                for (Map.Entry<String, Warp> warpset : fact.getWarps().entrySet()) {
-                    final String markid = warpset.getKey();
-                    final Warp warp = warpset.getValue();
-                    getLogger().info("Warp found: " + warpset.getKey());
-                    final MarkerIcon ico = getMarkerIcon(factname, fact);
-                    if(ico != null) {
-                        final PS pos = warp.getLocation();
-                        final String updatedLabel = factname + " [warp]";
-
-                        Marker marker = resmark.remove(markid);
-                        if(marker == null) {
-                            getLogger().info("oid: " + markid + ", world: " + warp.getWorld() + ", x: " + pos.getBlockX() + ", y: " + pos.getBlockY() + ", z: " + pos.getBlockZ());
-                            marker = set.createMarker(markid, updatedLabel, warp.getWorld(), pos.getBlockX(), pos.getBlockY(), pos.getBlockZ(), ico, false);
-                        }
-                        else {
-                            marker.setLocation(warp.getWorld(),  pos.getBlockX(), pos.getBlockY(), pos.getBlockZ());
-                            marker.setLabel(updatedLabel);
-                            marker.setMarkerIcon(ico);
-                        }
-
-                        if (marker != null) {
-                            // Set popup
-                            marker.setDescription(formatInfoWindow(fact));
-                            newmark.put(markid, marker);
-                        }
-                    }
-                }
         }
         blocks_by_faction.clear();
         
         /* Now, review old map - anything left is gone */
-        for(AreaMarker oldm : resareas.values()) {
+        for (AreaMarker oldm : resareas.values()) {
             oldm.deleteMarker();
         }
-        for(Marker oldm : resmark.values()) {
+        for (Marker oldm : resmark.values()) {
             oldm.deleteMarker();
         }
         /* And replace with new map */
         resareas = newmap;
         resmark = newmark;
-                
     }
     
     private void updatePlayerSets() {
@@ -581,25 +582,25 @@ public class DynmapFactionsPlugin extends JavaPlugin {
             requestUpdateFactions();
         }
         @EventHandler(priority=EventPriority.MONITOR)
-        public void onFactionRename(EventFactionsNameChange event) {
+        public void onFactionNameChange(EventFactionsNameChange event) {
             if(event.isCancelled())
                 return;
             requestUpdateFactions();
         }
         @EventHandler(priority=EventPriority.MONITOR)
-        public void onFactionRename(EventFactionsWarpAdd event) {
+        public void onFactionWarpAdd(EventFactionsWarpAdd event) {
             if(event.isCancelled())
                 return;
             requestUpdateFactions();
         }
         @EventHandler(priority=EventPriority.MONITOR)
-        public void onFactionRename(EventFactionsWarpRemove event) {
+        public void onFactionWarpRemove(EventFactionsWarpRemove event) {
             if(event.isCancelled())
                 return;
             requestUpdateFactions();
         }
         @EventHandler(priority=EventPriority.MONITOR)
-        public void onFactionRename(EventFactionsChunksChange event) {
+        public void onFactionChunksChange(EventFactionsChunksChange event) {
             if(event.isCancelled())
                 return;
             requestUpdateFactions();

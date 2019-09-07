@@ -28,6 +28,7 @@ import java.util.logging.Logger;
 import static org.dynmap.factions.area.AreaCommon.*;
 import static org.dynmap.factions.commons.Constant.DEF_INFO_WINDOW;
 import static org.dynmap.factions.commons.Constant.MAX_BLOCK_SIZE;
+import static org.dynmap.factions.commons.Constant.TICKRATE_RATIO;
 import static org.dynmap.factions.players.PlayerSetCommon.updatePlayerSets;
 
 public class DynmapFactionsPlugin extends JavaPlugin {
@@ -517,7 +518,7 @@ public class DynmapFactionsPlugin extends JavaPlugin {
         if (per < 15) {
             per = 15;
         }
-        updperiod = (per * 20);
+        updperiod = (per * TICKRATE_RATIO);
         stop = false;
 
         scheduleSyncDelayedTask(new FactionsUpdate(this), 40);   /* First time is 2 seconds */

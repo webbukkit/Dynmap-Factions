@@ -6,5 +6,6 @@ public class Constant {
     public static final String  FACTION_PLUGIN_NAME     = "Factions";
     public static final String  PREFIX_FACTION_SET_ID   = "factions.";
 
-    public static final int     MAX_BLOCK_SIZE          = 16;
+    public static final int     MAX_BLOCK_SIZE          = 16; /* Fixed at 16 */
+    public static final int     TICKRATE_RATIO          = 20;
 }

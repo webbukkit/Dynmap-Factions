@@ -8,7 +8,7 @@ Dynmap-Faction is an **expansion for [Factions3 for 1.13+](https://www.spigotmc.
 
 # Dependency
 Dynmap version v3.0-beta-5:<br/>
-https://www.spigotmc.org/resources/dynmap.274/<br/>
+https://www.spigotmc.org/resources/dynmap.274/<br/><br/>
 Factions3 for 1.13+ version 3.2.3:<br/>
 https://www.spigotmc.org/resources/factions3-for-1-13.63602/
 

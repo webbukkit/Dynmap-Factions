@@ -26,9 +26,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static org.dynmap.factions.area.AreaCommon.*;
-import static org.dynmap.factions.commons.Constant.DEF_INFO_WINDOW;
-import static org.dynmap.factions.commons.Constant.MAX_BLOCK_SIZE;
-import static org.dynmap.factions.commons.Constant.TICKRATE_RATIO;
+import static org.dynmap.factions.commons.Constant.*;
 import static org.dynmap.factions.players.PlayerSetCommon.updatePlayerSets;
 
 public class DynmapFactionsPlugin extends JavaPlugin {
@@ -40,6 +38,8 @@ public class DynmapFactionsPlugin extends JavaPlugin {
     private Plugin dynmap;
     private Plugin factions;
     private DynmapAPI dynmapAPI;
+    private boolean displayFactionName;
+    private boolean displayWarps;
 
     // Status of the plugin.
     private boolean stop;
@@ -328,6 +328,11 @@ public class DynmapFactionsPlugin extends JavaPlugin {
                     /* Set line and fill properties */
                     addStyle(cusstyle, defstyle, factionName, areaMarker);
 
+                    /* Set the faction name */
+                    if (displayFactionName) {
+                        /* TODO: SHOW THE FACTION NAME */
+                    }
+
                     /* Add to map */
                     newmap.put(polyId, areaMarker);
                     poly_index++;
@@ -381,31 +386,35 @@ public class DynmapFactionsPlugin extends JavaPlugin {
             }
             factblocks.clear();
 
-            /* Now, add marker for warp location */
-            for (Map.Entry<String, Warp> warpSet : faction.getWarps().entrySet()) {
-                final String oid = warpSet.getKey();
-                final Warp warp = warpSet.getValue();
-                final MarkerIcon ico = getMarkerIcon(cusstyle, defstyle, factname);
-                if (ico != null) {
-                    final PS pos = warp.getLocation();
-                    final Double lx = pos.getLocationX();
-                    final Double ly = pos.getLocationY();
-                    final Double lz = pos.getLocationZ();
-                    final String labelName = new StringBuilder("[Warp] ").append(factname).append(" - ").append(warp.getName()).toString();
+            // Display warp on not
+            if (displayWarps) {
 
-                    Marker marker = resmark.remove(oid);
-                    if (marker == null) {
-                        marker = set.createMarker(oid, labelName, warp.getWorld(), lx, ly, lz, ico, false);
-                    } else {
-                        marker.setLocation(warp.getWorld(), lx, ly, lz);
-                        marker.setLabel(labelName);
-                        marker.setMarkerIcon(ico);
-                    }
+                /* Now, add marker for warp location */
+                for (Map.Entry<String, Warp> warpSet : faction.getWarps().entrySet()) {
+                    final String oid = warpSet.getKey();
+                    final Warp warp = warpSet.getValue();
+                    final MarkerIcon ico = getMarkerIcon(cusstyle, defstyle, factname);
+                    if (ico != null) {
+                        final PS pos = warp.getLocation();
+                        final Double lx = pos.getLocationX();
+                        final Double ly = pos.getLocationY();
+                        final Double lz = pos.getLocationZ();
+                        final String labelName = new StringBuilder("[Warp] ").append(factname).append(" - ").append(warp.getName()).toString();
 
-                    if (marker != null) {
-                        // Set popup
-                        marker.setDescription(formatInfoWindow(infoWindow, faction));
-                        newmark.put(oid, marker);
+                        Marker marker = resmark.remove(oid);
+                        if (marker == null) {
+                            marker = set.createMarker(oid, labelName, warp.getWorld(), lx, ly, lz, ico, false);
+                        } else {
+                            marker.setLocation(warp.getWorld(), lx, ly, lz);
+                            marker.setLabel(labelName);
+                            marker.setMarkerIcon(ico);
+                        }
+
+                        if (marker != null) {
+                            // Set popup
+                            marker.setDescription(formatInfoWindow(infoWindow, faction));
+                            newmark.put(oid, marker);
+                        }
                     }
                 }
             }
@@ -476,6 +485,8 @@ public class DynmapFactionsPlugin extends JavaPlugin {
         set.setHideByDefault(cfg.getBoolean("layer.hidebydefault", false));
         use3d = cfg.getBoolean("use3dregions", false);
         infoWindow = cfg.getString("infoWindow", DEF_INFO_WINDOW);
+        displayFactionName = cfg.getBoolean("show-faction-name", true);
+        displayWarps = cfg.getBoolean("display-warp", true);
 
         /* Get style information */
         defstyle = new AreaStyle(markerAPI, cfg, "regionstyle");

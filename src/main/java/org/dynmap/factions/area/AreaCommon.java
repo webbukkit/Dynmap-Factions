@@ -44,8 +44,26 @@ public class AreaCommon {
         return cnt;
     }
 
+    /**
+     * Display name of the owner
+     *
+     * @param faction
+     * @return
+     */
+    private static String getFactionOwner(final Faction faction) {
+        for (final MPlayer player : faction.getMPlayers()) {
+            if (player.getRank().getName().equalsIgnoreCase(faction.getLeaderRank().getName())) {
+                return player.getName();
+            }
+        }
+        return "Unknown";
+    }
+
     public static String formatInfoWindow(final String infoWindow, final Faction faction) {
         String formattedWindow = new StringBuilder("<div class=\"regioninfo\">").append(infoWindow).append("</div>").toString();
+
+        formattedWindow = formattedWindow.replace("%owner%", getFactionOwner(faction));
+
         formattedWindow = formattedWindow.replace("%regionname%", ChatColor.stripColor(faction.getName()));
 
         // The describe can be null or empty
@@ -54,7 +72,7 @@ public class AreaCommon {
         }
 
         final MPlayer adm = faction.getLeader();
-        formattedWindow = formattedWindow.replace("%playerowners%", (adm!=null)?adm.getName():"");
+        formattedWindow = formattedWindow.replace("%playerowners%", (adm != null)? adm.getName() : "");
 
         final StringBuilder res = new StringBuilder();
         for (final MPlayer mPlayer : faction.getMPlayers()) {

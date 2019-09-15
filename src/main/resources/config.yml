@@ -10,11 +10,17 @@ layer:
   hidebydefault: false
   # ordering priority in layer menu (low goes before high - default is 0)
   layerprio: 2
-  # (optional) set minimum zoom level before layer is visible (0 = defalt, always visible)
+  # (optional) set minimum zoom level before layer is visible (0 = default, always visible)
   minzoom: 0
+
+# Allow players in faction to see all warps on dynmap (true/false)
+display-warp: true
+
+# Allow players in faction to see faction's name on dynmap (true/false)
+show-faction-name: true
   
 # Format for popup - substitute values for macros
-infowindow: '<div class="infowindow"><span style="font-size:120%;">%regionname%</span><br />Flags<br /><span style="font-weight:bold;">%flags%</span></div>'
+infowindow: '<div class="infoWindow"><span style="font-size:120%;">%regionname%</span><br /><span style="font-weight:bold;">Owner: %owner%</span><br />Flags<br /><span style="font-weight:bold;">%flags%</span></div>'
 
 # Allow players in faction to see one another on dynmap (only relevant if dynmap has 'player-info-protected' enabled)
 visibility-by-faction: true

@@ -49,7 +49,8 @@ public class DynmapFactionsPlugin extends JavaPlugin {
     private boolean playersets;
     private int blocksize;
     private FileConfiguration cfg;
-    private long updperiod;
+    private long updatePeriod;
+    private boolean updateEvent;
     private boolean use3d;
     private String infoWindow;
     private AreaStyle defstyle;
@@ -89,8 +90,8 @@ public class DynmapFactionsPlugin extends JavaPlugin {
         return playersets;
     }
 
-    public long getUpdperiod() {
-        return updperiod;
+    public long getUpdatePeriod() {
+        return updatePeriod;
     }
 
     public MarkerAPI getMarkerAPI() {
@@ -104,29 +105,35 @@ public class DynmapFactionsPlugin extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        info("initializing");
+        info("Initializing dynmap-faction3...");
         final PluginManager pm = getServer().getPluginManager();
 
         // Get Dynmap plugin
         dynmap = pm.getPlugin("dynmap");
         if (dynmap == null) {
-            severe("Cannot find dynmap!");
+            severe("Cannot find Dynmap! You have to download it on https://www.spigotmc.org/resources/dynmap.274/");
             return;
         }
 
         // Get Dynmap API
-        dynmapAPI = (DynmapAPI) dynmap; /* Get API */
+        dynmapAPI = (DynmapAPI) dynmap;
+
+        // Get dynmap version
+        String dynmapVersion = dynmapAPI.getDynmapVersion();
+        info("Version of dynmap: " + dynmapVersion);
 
         // Get Factions
         factions = pm.getPlugin("Factions");
         if (factions == null) {
-            severe("Cannot find Factions!");
+            severe("Cannot find Factions! You have to download it on https://www.spigotmc.org/resources/factions3-for-1-13.63602/");
             return;
         }
 
         // If both enabled, activate
         if (dynmap.isEnabled() && factions.isEnabled()) {
             activate();
+        } else {
+            severe("error, cannot active Dynmap-Faction3");
         }
 
         try {
@@ -162,9 +169,11 @@ public class DynmapFactionsPlugin extends JavaPlugin {
     }
 
     public void requestUpdateFactions() {
-        final FactionsUpdate factionsUpdate = new FactionsUpdate(this);
-        factionsUpdate.setRunOnce(true);
-        scheduleSyncDelayedTask(factionsUpdate, 20);
+        if (this.updateEvent) {
+            final FactionsUpdate factionsUpdate = new FactionsUpdate(this);
+            factionsUpdate.setRunOnce(true);
+            scheduleSyncDelayedTask(factionsUpdate, TICK_RATE_RATIO);
+        }
     }
 
     private boolean isVisible(final String id, final String worldName) {
@@ -435,12 +444,15 @@ public class DynmapFactionsPlugin extends JavaPlugin {
     }
 
     public void activate() {
+        info("Dynmap-Faction3 activated.");
+
         markerAPI = dynmapAPI.getMarkerAPI();
         if (markerAPI == null) {
-            severe("Error loading dynmap marker API!");
+            severe("Error loading Dynmap Marker API!");
             return;
         }
-        /* Connect to factions API */
+
+        // Connect to factions API
         factionAPI = Factions.get();
 
         blocksize = MAX_BLOCK_SIZE; /* Fixed at 16 */
@@ -524,15 +536,26 @@ public class DynmapFactionsPlugin extends JavaPlugin {
 
         updatePlayerSets(markerAPI, playersets);
 
-        /* Set up update job - based on periond */
-        int per = cfg.getInt("update.period", 300);
-        if (per < 15) {
-            per = 15;
+        /* Set up update job - based on period */
+        int per = cfg.getInt("update.period", 300); // 5 minutes
+        if (per < MINIMAL_TIME_TO_UPDATE) {
+            per = MINIMAL_TIME_TO_UPDATE;
         }
-        updperiod = (per * TICKRATE_RATIO);
-        stop = false;
 
-        scheduleSyncDelayedTask(new FactionsUpdate(this), 40);   /* First time is 2 seconds */
+        // set update period
+        this.updatePeriod = (per * TICK_RATE_RATIO);
+
+        // set update when event
+        this.updateEvent = cfg.getBoolean("update.event", true);
+
+        // set stop to false
+        this.stop = false;
+
+        // First refresh
+        scheduleSyncDelayedTask(this::updateClaimedChunk);
+
+        // create the cron task
+        scheduleSyncDelayedTask(new FactionsUpdate(this), updatePeriod);
         getServer().getPluginManager().registerEvents(new OurServerListener(this), this);
 
         info("version " + this.getDescription().getVersion() + " is activated");

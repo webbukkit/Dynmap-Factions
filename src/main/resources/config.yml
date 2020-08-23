@@ -3,6 +3,8 @@
 update:
   # Seconds between checks for Factions updates
   period: 300
+  # event can update the map
+  event: true
 
 layer:
   name: "Factions"

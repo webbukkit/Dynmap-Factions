@@ -1,7 +1,9 @@
 package org.dynmap.factions;
 
+import java.util.Date;
+
 public class FactionsUpdate implements Runnable {
-    private final DynmapFactionsPlugin  kernel;
+    private final DynmapFactionsPlugin kernel;
     private boolean runOnce;
 
     public FactionsUpdate(final DynmapFactionsPlugin kernel) {
@@ -9,7 +11,7 @@ public class FactionsUpdate implements Runnable {
     }
 
     public boolean isRunOnce() {
-        return runOnce;
+        return this.runOnce;
     }
 
     public void setRunOnce(boolean runOnce) {
@@ -18,10 +20,11 @@ public class FactionsUpdate implements Runnable {
 
     @Override
     public synchronized void run() {
-        if (!kernel.isStop()) {
-            kernel.updateClaimedChunk();
-            if (!isRunOnce()) {
-                kernel.scheduleSyncDelayedTask(this, kernel.getUpdperiod());
+        System.out.println(new Date());
+        if (!this.kernel.isStop()) {
+            this.kernel.updateClaimedChunk();
+            if (!this.isRunOnce()) {
+                this.kernel.scheduleSyncDelayedTask(this, kernel.getUpdatePeriod());
             }
         }
     }

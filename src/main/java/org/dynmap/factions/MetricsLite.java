@@ -35,12 +35,7 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.scheduler.BukkitTask;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.net.Proxy;
 import java.net.URL;
 import java.net.URLConnection;
@@ -133,6 +128,33 @@ public class MetricsLite {
     }
 
     /**
+     * <p>Encode a key/value data pair to be used in a HTTP post request. This INCLUDES a & so the first
+     * key/value pair MUST be included manually, e.g:</p>
+     * <code>
+     * StringBuffer data = new StringBuffer();
+     * data.append(encode("guid")).append('=').append(encode(guid));
+     * encodeDataPair(data, "version", description.getVersion());
+     * </code>
+     *
+     * @param buffer the stringbuilder to append the data pair onto
+     * @param key    the key value
+     * @param value  the value
+     */
+    private static void encodeDataPair(final StringBuilder buffer, final String key, final String value) throws UnsupportedEncodingException {
+        buffer.append('&').append(encode(key)).append('=').append(encode(value));
+    }
+
+    /**
+     * Encode text as UTF-8
+     *
+     * @param text the text to encode
+     * @return the encoded text, as UTF-8
+     */
+    private static String encode(final String text) throws UnsupportedEncodingException {
+        return URLEncoder.encode(text, "UTF-8");
+    }
+
+    /**
      * Start measuring statistics. This will immediately create an async repeating task as the plugin and send
      * the initial data to the metrics backend, and then after that it will post in increments of
      * PING_INTERVAL * 1200 ticks.
@@ -193,7 +215,7 @@ public class MetricsLite {
      * @return true if metrics should be opted out of it
      */
     public boolean isOptOut() {
-        synchronized(optOutLock) {
+        synchronized (optOutLock) {
             try {
                 // Reload the metrics file
                 configuration.load(getConfigFile());
@@ -366,33 +388,6 @@ public class MetricsLite {
         } catch (Exception e) {
             return false;
         }
-    }
-
-    /**
-     * <p>Encode a key/value data pair to be used in a HTTP post request. This INCLUDES a & so the first
-     * key/value pair MUST be included manually, e.g:</p>
-     * <code>
-     * StringBuffer data = new StringBuffer();
-     * data.append(encode("guid")).append('=').append(encode(guid));
-     * encodeDataPair(data, "version", description.getVersion());
-     * </code>
-     *
-     * @param buffer the stringbuilder to append the data pair onto
-     * @param key the key value
-     * @param value the value
-     */
-    private static void encodeDataPair(final StringBuilder buffer, final String key, final String value) throws UnsupportedEncodingException {
-        buffer.append('&').append(encode(key)).append('=').append(encode(value));
-    }
-
-    /**
-     * Encode text as UTF-8
-     *
-     * @param text the text to encode
-     * @return the encoded text, as UTF-8
-     */
-    private static String encode(final String text) throws UnsupportedEncodingException {
-        return URLEncoder.encode(text, "UTF-8");
     }
 
 }

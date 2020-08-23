@@ -21,24 +21,24 @@ public class AreaCommon {
     public static int floodFillTarget(TileFlags src, TileFlags dest, int x, int y) {
         int cnt = 0;
         ArrayDeque<int[]> stack = new ArrayDeque<int[]>();
-        stack.push(new int[] { x, y });
+        stack.push(new int[]{x, y});
 
         while (!stack.isEmpty()) {
             int[] nxt = stack.pop();
             x = nxt[0];
             y = nxt[1];
-            if(src.getFlag(x, y)) { /* Set in src */
+            if (src.getFlag(x, y)) { /* Set in src */
                 src.setFlag(x, y, false);   /* Clear source */
                 dest.setFlag(x, y, true);   /* Set in destination */
                 cnt++;
-                if(src.getFlag(x+1, y))
-                    stack.push(new int[] { x+1, y });
-                if(src.getFlag(x-1, y))
-                    stack.push(new int[] { x-1, y });
-                if(src.getFlag(x, y+1))
-                    stack.push(new int[] { x, y+1 });
-                if(src.getFlag(x, y-1))
-                    stack.push(new int[] { x, y-1 });
+                if (src.getFlag(x + 1, y))
+                    stack.push(new int[]{x + 1, y});
+                if (src.getFlag(x - 1, y))
+                    stack.push(new int[]{x - 1, y});
+                if (src.getFlag(x, y + 1))
+                    stack.push(new int[]{x, y + 1});
+                if (src.getFlag(x, y - 1))
+                    stack.push(new int[]{x, y - 1});
             }
         }
         return cnt;
@@ -72,7 +72,7 @@ public class AreaCommon {
         }
 
         final MPlayer adm = faction.getLeader();
-        formattedWindow = formattedWindow.replace("%playerowners%", (adm != null)? adm.getName() : "");
+        formattedWindow = formattedWindow.replace("%playerowners%", (adm != null) ? adm.getName() : "");
 
         final StringBuilder res = new StringBuilder();
         for (final MPlayer mPlayer : faction.getMPlayers()) {

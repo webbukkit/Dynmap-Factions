@@ -15,12 +15,12 @@ import static org.dynmap.factions.commons.Constant.PREFIX_FACTION_SET_ID;
 
 public class PlayerSetCommon {
 
-    private static final String MESSAGE_ADDED_PLAYER    = "Added player visibility set '";
-    private static final String MESSAGE_FOR_FACTION     = "' for faction ";
+    private static final String MESSAGE_ADDED_PLAYER = "Added player visibility set '";
+    private static final String MESSAGE_FOR_FACTION = "' for faction ";
 
     public static void updatePlayerSet(final MarkerAPI markerApi, String factionUUID) {
         /* If Wilderness or other unassociated factions (guid-style ID), skip */
-        if(factionUUID.indexOf('-') >= 0) {
+        if (factionUUID.indexOf('-') >= 0) {
             return;
         }
         final Set<String> playerIds = new HashSet<>();
@@ -39,12 +39,10 @@ public class PlayerSetCommon {
         final PlayerSet set = markerApi.getPlayerSet(setId); // See if set exists
         if (set == null && faction != null) {
             markerApi.createPlayerSet(setId, true, playerIds, false);
-            info( new StringBuilder(MESSAGE_ADDED_PLAYER).append(setId).append(MESSAGE_FOR_FACTION).append(factionUUID).toString());
-        }
-        else if (faction != null) {
+            info(new StringBuilder(MESSAGE_ADDED_PLAYER).append(setId).append(MESSAGE_FOR_FACTION).append(factionUUID).toString());
+        } else if (faction != null) {
             set.setPlayers(playerIds);
-        }
-        else {
+        } else {
             set.deleteSet();
         }
     }

@@ -22,73 +22,64 @@ public class OurServerListener implements Listener {
     public void onPluginEnable(PluginEnableEvent event) {
         final Plugin plugin = event.getPlugin();
         final String name = plugin.getDescription().getName();
-        if(DYNMAP_PLUGIN_NAME.equals(name) || FACTION_PLUGIN_NAME.equals(name)) {
-            if(kernel.getDynmap().isEnabled() && kernel.getFactions().isEnabled()) {
+        if (DYNMAP_PLUGIN_NAME.equals(name) || FACTION_PLUGIN_NAME.equals(name)) {
+            if (kernel.getDynmap().isEnabled() && kernel.getFactions().isEnabled()) {
                 kernel.activate();
             }
         }
     }
 
-    @EventHandler(priority= EventPriority.MONITOR)
+    @EventHandler(priority = EventPriority.MONITOR)
     public void onFPlayerJoin(EventFactionsMembershipChange event) {
-        if(event.isCancelled())
+        if (event.isCancelled())
             return;
-        if (kernel.isPlayersets()) {
+        if (kernel.isPlayersets())
             kernel.requestUpdatePlayerSet(event.getNewFaction().getId());
-        }
     }
 
-    @EventHandler(priority=EventPriority.MONITOR)
+    @EventHandler(priority = EventPriority.MONITOR)
     public void onFactionCreate(EventFactionsCreate event) {
-        if(event.isCancelled()) {
+        if (event.isCancelled())
             return;
-        }
-        if(kernel.isPlayersets()) {
+        if (kernel.isPlayersets())
             kernel.requestUpdatePlayerSet(event.getFactionId());
-        }
         kernel.requestUpdateFactions();
     }
 
-    @EventHandler(priority=EventPriority.MONITOR)
+    @EventHandler(priority = EventPriority.MONITOR)
     public void onFactionDisband(EventFactionsDisband event) {
-        if(event.isCancelled()) {
+        if (event.isCancelled())
             return;
-        }
-        if(kernel.isPlayersets()) {
+        if (kernel.isPlayersets())
             kernel.requestUpdatePlayerSet(event.getFactionId());
-        }
         kernel.requestUpdateFactions();
     }
 
-    @EventHandler(priority=EventPriority.MONITOR)
+    @EventHandler(priority = EventPriority.MONITOR)
     public void onFactionNameChange(EventFactionsNameChange event) {
-        if(event.isCancelled()) {
+        if (event.isCancelled())
             return;
-        }
         kernel.requestUpdateFactions();
     }
 
-    @EventHandler(priority=EventPriority.MONITOR)
+    @EventHandler(priority = EventPriority.MONITOR)
     public void onFactionWarpAdd(EventFactionsWarpAdd event) {
-        if(event.isCancelled()) {
+        if (event.isCancelled())
             return;
-        }
         kernel.requestUpdateFactions();
     }
 
-    @EventHandler(priority=EventPriority.MONITOR)
+    @EventHandler(priority = EventPriority.MONITOR)
     public void onFactionWarpRemove(EventFactionsWarpRemove event) {
-        if(event.isCancelled()) {
+        if (event.isCancelled())
             return;
-        }
         kernel.requestUpdateFactions();
     }
 
-    @EventHandler(priority=EventPriority.MONITOR)
+    @EventHandler(priority = EventPriority.MONITOR)
     public void onFactionChunksChange(EventFactionsChunksChange event) {
-        if(event.isCancelled()) {
+        if (event.isCancelled())
             return;
-        }
         kernel.requestUpdateFactions();
     }
 }

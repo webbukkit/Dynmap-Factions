@@ -204,7 +204,12 @@ public class DynmapFactionsPlugin extends JavaPlugin {
     private String formatInfoWindow(Faction fact) {
         String v = "<div class=\"regioninfo\">"+infowindow+"</div>";
         v = v.replace("%regionname%", ChatColor.stripColor(fact.getName()));
-        v = v.replace("%description%", ChatColor.stripColor(fact.getDescription()));
+        
+        String description = fact.getDescription();
+
+        
+        v = v.replace("%description%", description == null ? "" : ChatColor.stripColor(description));
+        
         MPlayer adm = fact.getLeader();
         v = v.replace("%playerowners%", (adm!=null)?adm.getName():"");
         String res = "";

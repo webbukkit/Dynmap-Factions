@@ -1,37 +1,39 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-  <groupId>org.dynmap</groupId>
-  <artifactId>Dynmap-Factions</artifactId>
-  <version>0.91</version>
-  	<properties>
-	   	<timestamp>${maven.build.timestamp}</timestamp>
-   		<maven.build.timestamp.format>yyyyMMddHHmm</maven.build.timestamp.format>	
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>org.dynmap</groupId>
+	<artifactId>Dynmap-Factions</artifactId>
+	<version>0.91</version>
+	<properties>
+		<timestamp>${maven.build.timestamp}</timestamp>
+		<maven.build.timestamp.format>yyyyMMddHHmm</maven.build.timestamp.format>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<BUILD_NUMBER>Dev${timestamp}</BUILD_NUMBER>
 	</properties>
-  
-    <build>
-  	  <resources>
-		<resource>
-		  <directory>src/main/resources</directory>
-		  <filtering>true</filtering>
-		  <includes>
-			<include>*.yml</include>
-			<include>*.txt</include>
-		  </includes>
-		</resource>
-		<resource>
-		  <directory>src/main/resources</directory>
-		  <filtering>false</filtering>
-		  <excludes>
-			<exclude>*.yml</exclude>
-			<exclude>*.txt</exclude>
-		  </excludes>
-		</resource>
-	  </resources>
-  
-  	<plugins>
- 			<plugin>
+
+	<build>
+		<resources>
+			<resource>
+				<directory>src/main/resources</directory>
+				<filtering>true</filtering>
+				<includes>
+					<include>*.yml</include>
+					<include>*.txt</include>
+				</includes>
+			</resource>
+			<resource>
+				<directory>src/main/resources</directory>
+				<filtering>false</filtering>
+				<excludes>
+					<exclude>*.yml</exclude>
+					<exclude>*.txt</exclude>
+				</excludes>
+			</resource>
+		</resources>
+
+		<plugins>
+			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>2.0.2</version>
@@ -40,9 +42,9 @@
 					<target>1.6</target>
 				</configuration>
 			</plugin>
-  	</plugins>
-  </build>
-     <repositories>
+		</plugins>
+	</build>
+	<repositories>
 		<repository>
 			<releases>
 			</releases>
@@ -60,31 +62,31 @@
 			<url>http://repo.mikeprimm.com/</url>
 		</repository>
 	</repositories>
-  
-  <dependencies>
-  	<dependency>
-  		<groupId>org.dynmap</groupId>
-  		<artifactId>dynmap-api</artifactId>
-  		<version>1.9</version>
-  	</dependency>
-  	<dependency>
-  		<groupId>org.bukkit</groupId>
-  		<artifactId>bukkit</artifactId>
-  		<version>1.7.10-R0.1-SNAPSHOT</version>
-  	</dependency>
-  	<dependency>
-  		<groupId>com.massivecraft</groupId>
-  		<artifactId>Factions</artifactId>
-  		<version>2.7.1</version>
-  		<scope>system</scope>
-  		<systemPath>${project.basedir}/Factions-2.7.1.jar</systemPath>
-  	</dependency>
-  	<dependency>
-  		<groupId>com.massivecraft</groupId>
-  		<artifactId>MassiveCore</artifactId>
-  		<version>2.7.1</version>
-  		<scope>system</scope>
-  		<systemPath>${project.basedir}/MassiveCore-2.7.1.jar</systemPath>
-  	</dependency>
-  </dependencies>
+
+	<dependencies>
+		<dependency>
+			<groupId>org.dynmap</groupId>
+			<artifactId>dynmap-api</artifactId>
+			<version>1.9</version>
+		</dependency>
+		<dependency>
+			<groupId>org.bukkit</groupId>
+			<artifactId>bukkit</artifactId>
+			<version>1.7.10-R0.1-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>com.massivecraft</groupId>
+			<artifactId>Factions</artifactId>
+			<version>2.7.1</version>
+			<scope>system</scope>
+			<systemPath>${project.basedir}/Factions-2.7.1.jar</systemPath>
+		</dependency>
+		<dependency>
+			<groupId>com.massivecraft</groupId>
+			<artifactId>MassiveCore</artifactId>
+			<version>2.7.1</version>
+			<scope>system</scope>
+			<systemPath>${project.basedir}/MassiveCore-2.7.1.jar</systemPath>
+		</dependency>
+	</dependencies>
 </project>
